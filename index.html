@@ -2,27 +2,212 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3D друк</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Print3D</title>
 <style>
-  :root { --bg:#fbf4ea; --text:#2b2118; --accent:#f07a1a; --card:#fffaf2; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#17130f; --text:#f3e9dc; --accent:#ff8c2e; --card:#221c16; }
+:root{
+  --bg:#fbf4ea; --bg2:#fde6cc; --text:#2b2118; --muted:#7a6a5a;
+  --card:rgba(255,250,242,.75); --line:rgba(120,80,40,.18);
+  --field:#fffdf9; --accent:#e86a0c; --blob:rgba(255,150,60,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#15110d; --bg2:#26180d; --text:#f3e9dc; --muted:#a8978545;
+    --muted:#a99886; --card:rgba(34,28,22,.78); --line:rgba(255,200,150,.14);
+    --field:#1c1712; --accent:#ff8c2e; --blob:rgba(255,120,30,.28);
   }
-  body { margin:0; min-height:100vh; display:grid; place-items:center;
-         background:var(--bg); color:var(--text);
-         font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-  .card { background:var(--card); padding:32px; border-radius:24px;
-          text-align:center; max-width:320px; }
-  button { background:var(--accent); color:#1a0f05; border:0; padding:14px 28px;
-           border-radius:999px; font-size:16px; font-weight:600; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100vh; color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(900px 500px at 15% -10%,var(--bg2),transparent 60%),var(--bg);
+  display:grid; place-items:center; padding:20px;
+  padding-top:max(20px,env(safe-area-inset-top)); padding-bottom:max(20px,env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+.blob{position:fixed;width:340px;height:340px;border-radius:50%;background:var(--blob);filter:blur(70px);z-index:0;animation:float 14s ease-in-out infinite alternate}
+.b1{top:-80px;right:-60px}.b2{bottom:-100px;left:-80px;animation-delay:-6s}
+@keyframes float{to{transform:translate(30px,40px) scale(1.15)}}
+.wrap{position:relative;z-index:1;width:100%;max-width:420px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px}
+.logo svg{width:26px;height:26px;color:var(--accent)}
+.lang{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang button{border:0;background:none;color:var(--muted);font:600 13px inherit;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.25s}
+.lang button.on{background:var(--accent);color:#2a1303}
+.card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:26px 22px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:rise .6s cubic-bezier(.2,.9,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}}
+h1{margin:0 0 4px;font-size:26px}
+.sub{margin:0 0 20px;color:var(--muted);font-size:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.f{display:block;margin-bottom:12px;min-width:0}
+label.f span{display:block;font-size:12px;color:var(--muted);margin:0 0 5px 4px}
+.inp{position:relative}
+input[type=text],input[type=email],input[type=password]{
+  width:100%;padding:13px 14px;border-radius:16px;border:1px solid var(--line);
+  background:var(--field);color:var(--text);font:16px inherit;outline:0;transition:.2s}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+input.bad{border-color:#d93b3b}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);padding:8px;cursor:pointer}
+.eye svg{width:20px;height:20px;display:block}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;margin:6px 0 16px;line-height:1.4;cursor:pointer}
+.chk input{position:absolute;opacity:0}
+.box{flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--line);background:var(--field);display:grid;place-items:center;transition:.25s cubic-bezier(.34,1.56,.64,1)}
+.box svg{width:14px;height:14px;color:#2a1303;opacity:0;transform:scale(.4);transition:.25s}
+.chk input:checked+.box{background:var(--accent);border-color:var(--accent);transform:scale(1.08)}
+.chk input:checked+.box svg{opacity:1;transform:none}
+.chk input:focus-visible+.box{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.link{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.err{color:#d93b3b;font-size:13px;min-height:18px;margin:0 0 8px 4px}
+/* fog button */
+.btn{position:relative;isolation:isolate;overflow:hidden;width:100%;cursor:pointer;
+  border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:15px 24px;
+  font:700 16px inherit;color:#2a1303;background:rgba(255,160,70,.3);
+  backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 10px 26px -10px rgba(240,110,20,.6);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,opacity .3s}
+.btn::before{content:"";position:absolute;inset:-40%;z-index:-1;filter:blur(16px);
+  background:radial-gradient(circle at 25% 35%,rgba(255,130,30,.95),transparent 50%),radial-gradient(circle at 78% 70%,rgba(255,200,120,.85),transparent 50%);
+  animation:fog 7s ease-in-out infinite alternate}
+@keyframes fog{to{transform:translate(12%,-8%) rotate(25deg)}}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.5);color:var(--text)}
+.btn.ghost::before{opacity:.35}
+.hide{display:none}
+.done{text-align:center}
+.done .ic{width:68px;height:68px;margin:4px auto 14px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);animation:pop .6s cubic-bezier(.34,1.56,.64,1)}
+.done .ic svg{width:34px;height:34px}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.demo{margin-top:14px;font-size:12px;color:var(--muted);text-align:center}
+dialog{border:1px solid var(--line);border-radius:24px;background:var(--bg);color:var(--text);max-width:420px;width:calc(100% - 32px);padding:22px;max-height:80vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>3D друк</h1>
-    <p>Сайт працює!</p>
-    <button>Скоро тут буде каталог</button>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+      Print3D
+    </div>
+    <div class="lang"><button data-l="uk">UA</button><button data-l="ru">RU</button></div>
   </div>
+ 
+  <div class="card" id="formCard">
+    <h1 data-t="title"></h1>
+    <p class="sub" data-t="sub"></p>
+    <div id="form">
+      <div class="row">
+        <label class="f"><span data-t="first"></span><input type="text" id="fn" autocomplete="given-name"></label>
+        <label class="f"><span data-t="last"></span><input type="text" id="ln" autocomplete="family-name"></label>
+      </div>
+      <label class="f"><span data-t="email"></span><input type="email" id="em" autocomplete="email" inputmode="email"></label>
+      <label class="f"><span data-t="pass"></span>
+        <div class="inp"><input type="password" id="pw" autocomplete="new-password">
+          <button type="button" class="eye" id="eye" aria-label="show">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button></div>
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="ok">
+        <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <span><span data-t="agree"></span> <button type="button" class="link" id="pol" data-t="policy"></button></span>
+      </label>
+      <p class="err" id="err"></p>
+      <button class="btn" id="go" disabled data-t="submit"></button>
+    </div>
+    <p class="demo hide" id="demo"></p>
+  </div>
+ 
+  <div class="card done hide" id="doneCard">
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></div>
+    <h1 data-t="doneTitle"></h1>
+    <p class="sub"><span data-t="doneText"></span><br><b id="sentTo"></b></p>
+    <button class="btn ghost" id="back" data-t="back"></button>
+  </div>
+</div>
+ 
+<dialog id="dlg">
+  <h2 data-t="policy"></h2>
+  <div id="polText"></div>
+  <button class="btn" id="closeDlg" data-t="close"></button>
+</dialog>
+ 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== ВСТАВ СВОЇ ДАНІ З SUPABASE (Project Settings -> API) =====
+const SUPABASE_URL = "";
+const SUPABASE_KEY = "";
+// ================================================================
+ 
+const T = {
+  uk:{title:"Створити акаунт",sub:"Замовляйте 3D друк і стежте за статусом",first:"Ім'я",last:"Прізвище",
+    email:"Електронна пошта",pass:"Пароль (мін. 8 символів)",agree:"Я погоджуюсь на обробку персональних даних згідно з",
+    policy:"Політикою конфіденційності",submit:"Зареєструватися",doneTitle:"Перевірте пошту",
+    doneText:"Ми надіслали лист із посиланням для підтвердження на",back:"Назад",close:"Закрити",
+    eName:"Введіть ім'я та прізвище",eMail:"Введіть правильну пошту",ePass:"Пароль має містити мінімум 8 символів",
+    eUsed:"Ця пошта вже зареєстрована",eGen:"Не вийшло зареєструватися, спробуйте ще раз",
+    demo:"Режим показу: Supabase ще не підключено, лист не надсилається.",wait:"Зачекайте...",
+    pol:"<p>Ми збираємо: ім'я, прізвище, пошту, а також фото, креслення та повідомлення у чаті замовлення.</p><p>Навіщо: щоб виконати ваше замовлення та зв'язатися з вами.</p><p>Хто бачить: лише власник магазину.</p><p>Ви можете попросити видалити свої дані та акаунт у будь-який час.</p><p><i>Це заготовка, її треба замінити своїм текстом.</i></p>"},
+  ru:{title:"Создать аккаунт",sub:"Заказывайте 3D печать и следите за статусом",first:"Имя",last:"Фамилия",
+    email:"Электронная почта",pass:"Пароль (мин. 8 символов)",agree:"Я согласен на обработку персональных данных согласно",
+    policy:"Политике конфиденциальности",submit:"Зарегистрироваться",doneTitle:"Проверьте почту",
+    doneText:"Мы отправили письмо со ссылкой для подтверждения на",back:"Назад",close:"Закрыть",
+    eName:"Введите имя и фамилию",eMail:"Введите правильную почту",ePass:"Пароль должен содержать минимум 8 символов",
+    eUsed:"Эта почта уже зарегистрирована",eGen:"Не удалось зарегистрироваться, попробуйте ещё раз",
+    demo:"Режим показа: Supabase ещё не подключён, письмо не отправляется.",wait:"Подождите...",
+    pol:"<p>Мы собираем: имя, фамилию, почту, а также фото, чертежи и сообщения в чате заказа.</p><p>Зачем: чтобы выполнить ваш заказ и связаться с вами.</p><p>Кто видит: только владелец магазина.</p><p>Вы можете попросить удалить свои данные и аккаунт в любое время.</p><p><i>Это заготовка, её нужно заменить своим текстом.</i></p>"}
+};
+const $=id=>document.getElementById(id);
+const sb=(SUPABASE_URL&&SUPABASE_KEY&&window.supabase)?supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+let lang=localStorage.getItem("lang")||"uk";
+ 
+function setLang(l){
+  lang=l; try{localStorage.setItem("lang",l)}catch(e){}
+  document.documentElement.lang=l;
+  document.querySelectorAll("[data-t]").forEach(e=>e.textContent=T[l][e.dataset.t]);
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
+  $("polText").innerHTML=T[l].pol;
+  if(!sb){$("demo").textContent=T[l].demo;$("demo").classList.remove("hide")}
+}
+document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
+ 
+$("ok").onchange=()=>$("go").disabled=!$("ok").checked;
+$("eye").onclick=()=>{const p=$("pw");p.type=p.type==="password"?"text":"password"};
+$("pol").onclick=()=>$("dlg").showModal();
+$("closeDlg").onclick=()=>$("dlg").close();
+$("back").onclick=()=>{$("doneCard").classList.add("hide");$("formCard").classList.remove("hide")};
+ 
+function fail(msg,...ids){$("err").textContent=msg;ids.forEach(i=>$(i).classList.add("bad"))}
+ 
+$("go").onclick=async()=>{
+  document.querySelectorAll("input").forEach(i=>i.classList.remove("bad"));$("err").textContent="";
+  const fn=$("fn").value.trim(),ln=$("ln").value.trim(),em=$("em").value.trim(),pw=$("pw").value;
+  if(!fn||!ln)return fail(T[lang].eName,...(!fn?["fn"]:[]),...(!ln?["ln"]:[]));
+  if(!/^\S+@\S+\.\S+$/.test(em))return fail(T[lang].eMail,"em");
+  if(pw.length<8)return fail(T[lang].ePass,"pw");
+  const btn=$("go");btn.disabled=true;const old=btn.textContent;btn.textContent=T[lang].wait;
+  try{
+    if(sb){
+      const {data,error}=await sb.auth.signUp({email:em,password:pw,
+        options:{data:{first_name:fn,last_name:ln,lang},emailRedirectTo:location.origin}});
+      if(error)throw error;
+      if(data.user&&data.user.identities&&data.user.identities.length===0)throw {used:true};
+    }
+    $("sentTo").textContent=em;
+    $("formCard").classList.add("hide");$("doneCard").classList.remove("hide");
+  }catch(e){
+    fail(e&&(e.used||/registered/i.test(e.message||""))?T[lang].eUsed:T[lang].eGen,"em");
+  }
+  btn.textContent=old;btn.disabled=!$("ok").checked;
+};
+setLang(lang);
+</script>
 </body>
 </html>
