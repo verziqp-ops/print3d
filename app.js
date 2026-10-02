@@ -48,7 +48,21 @@ css.textContent=`
 .rw{display:flex;gap:8px;align-items:center;margin:8px 0}.rw>*{min-width:0}
 #nav{position:fixed;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));width:min(396px,calc(100% - 24px));display:flex;justify-content:space-around;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px;backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);z-index:5;box-shadow:0 10px 30px -10px rgba(0,0,0,.35)}
 #nav button{flex:1;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font:600 11px inherit;padding:7px 4px;border-radius:999px;cursor:pointer;transition:.25s}
-#nav button svg{width:22px;height:22px}#nav button.on{color:#2a1303;background:var(--accent)}`;
+#nav button svg{width:22px;height:22px}#nav button.on{color:#2a1303;background:var(--accent)}
+.btn,.chip,#nav button,.seg button,.fp,.card2,.lang button{transition:transform .5s cubic-bezier(.34,1.56,.64,1),background .3s,border-color .3s,box-shadow .3s,color .3s}
+@media (hover:hover){.btn:hover,.chip:hover,.fp:hover,.seg button:hover{transform:scale(1.05)}#nav button:hover{transform:scale(1.12)}.card2.pc:hover,.card2.oi:hover{transform:translateY(-3px) scale(1.01)}}
+.btn:active,.chip:active,.fp:active,.seg button:active,#nav button:active{transform:scale(.92)!important;transition-duration:.12s}
+#view>*{animation:rise .55s cubic-bezier(.2,.9,.3,1) both}
+#view>*:nth-child(2){animation-delay:.06s}#view>*:nth-child(3){animation-delay:.12s}#view>*:nth-child(4){animation-delay:.18s}
+.seg{display:flex;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{flex:1;border:0;background:none;color:var(--muted);font:600 14px inherit;padding:10px 6px;border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#2a1303;box-shadow:0 6px 16px -6px rgba(240,110,20,.7)}
+.fp{display:flex;align-items:center;gap:10px;padding:13px 14px;margin-bottom:10px;border:1.5px dashed var(--line);border-radius:16px;background:var(--field);color:var(--muted);cursor:pointer;font-size:14px;overflow:hidden}
+.fp svg{width:20px;height:20px;flex:none;color:var(--accent)}
+.fp span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fp.has{border-style:solid;border-color:var(--accent);color:var(--text)}
+#app select{-webkit-appearance:none;appearance:none;padding-right:40px;background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a99886' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center/16px}
+@media (prefers-reduced-motion:reduce){#view>*{animation:none}}`;
 document.head.appendChild(css);
 const th=localStorage.getItem("theme");if(th)document.documentElement.dataset.theme=th;
 
@@ -63,6 +77,7 @@ async function up(f,dir){
   const {error}=await sb.storage.from("uploads").upload(n,f);if(error)throw error;
   return sb.storage.from("uploads").getPublicUrl(n).data.publicUrl;
 }
+const fp=(id,txt,acc)=>`<label class="fp" data-x="${esc(txt)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg><span>${esc(txt)}</span><input type="file" id="${id}" ${acc?`accept="${acc}"`:""} data-c="fp" hidden></label>`;
 const badge=s=>`<span class="badge" style="background:${STC[s]||"#888"}">${a(s)}</span>`;
 const tabs=(list,cur,key)=>`<div class="tabs">${list.map(([k,t])=>`<button class="chip ${k===cur?"on":""}" data-a="${key}" data-n="${k}">${t}</button>`).join("")}</div>`;
 
@@ -81,8 +96,7 @@ function orderForm(p){
   return `<div class="card2"><h2>${a("order")}</h2>
   <label class="f"><span>${a("name")}</span><input type="text" id="o-t" value="${esc(p?p.title:"")}"></label>
   <label class="f"><span>${a("note")}</span><textarea id="o-d"></textarea></label>
-  <label class="f"><span>${a("photo")}</span><input type="file" id="o-i" accept="image/*"></label>
-  <label class="f"><span>${a("file")}</span><input type="file" id="o-f"></label>
+  ${fp("o-i",a("photo"),"image/*")}${fp("o-f",a("file"))}
   <div class="lb">${a("plastic")}</div><div class="chips">${D.plastics.map(x=>`<button class="chip" data-a="pl" data-n="${esc(x.name)}">${esc(x.name)}</button>`).join("")}</div><p class="mut" id="pdesc"></p>
   <div class="lb">${a("color")}</div><div class="chips">${D.colors.filter(c=>c.in_stock).map(c=>`<button class="chip" data-a="co" data-n="${esc(c.name)}"><i style="background:${esc(c.hex)}"></i>${esc(c.name)}</button>`).join("")}</div>
   <p class="err" id="o-e"></p><button class="btn" data-a="send">${a("send")}</button></div>`;
@@ -99,7 +113,7 @@ async function profile(){
   return h+`<div class="card2"><label class="av">${me.avatar?`<img src="${esc(me.avatar)}">`:ini}<input type="file" accept="image/*" data-c="av" hidden></label>
   <h2 style="text-align:center">${esc(((me.first_name||"")+" "+(me.last_name||"")).trim())}</h2><p class="mut" style="text-align:center">${esc(user.email)}</p>
   <div class="lb">${a("phone")}</div><div class="rw"><input type="text" id="ph" inputmode="tel" value="${esc(me.phone||"")}"><button class="btn sm" data-a="phone">${a("save")}</button></div>
-  <div class="lb">${a("theme")}</div><select data-c="th"><option value="">${a("sys")}</option><option value="light">${a("light")}</option><option value="dark">${a("dark")}</option></select>
+  <div class="lb">${a("theme")}</div><div class="seg">${[["",a("sys")],["light",a("light")],["dark",a("dark")]].map(([v,t])=>`<button data-a="th" data-n="${v}" class="${(localStorage.getItem("theme")||"")===v?"on":""}">${t}</button>`).join("")}</div>
   <div style="height:12px"></div><button class="btn ghost" data-a="out">${a("out")}</button></div>`;
 }
 async function admin(){
@@ -111,7 +125,7 @@ async function admin(){
     return h+`<select data-c="cl"><option value="">${a("client")}: ${a("all")}</option>${Object.entries(names).map(([i,n])=>`<option value="${i}" ${i===f?"selected":""}>${esc(n)}</option>`).join("")}</select>`+
       ((o.data||[]).filter(x=>!f||x.user_id===f).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
-  if(asub==="prods")return h+`<div class="card2"><label class="f"><span>${a("title")}</span><input type="text" id="n1"></label><label class="f"><span>${a("descr")}</span><textarea id="n2"></textarea></label><label class="f"><span>${a("photo")}</span><input type="file" id="n3" accept="image/*"></label><button class="btn" data-a="addp">${a("add")}</button></div>`+
+  if(asub==="prods")return h+`<div class="card2"><label class="f"><span>${a("title")}</span><input type="text" id="n1"></label><label class="f"><span>${a("descr")}</span><textarea id="n2"></textarea></label>${fp("n3",a("photo"),"image/*")}<button class="btn" data-a="addp">${a("add")}</button></div>`+
     D.products.map(p=>`<div class="card2 rw"><b style="flex:1">${esc(p.title)}</b><button class="link" data-a="delp" data-id="${p.id}">${a("del")}</button></div>`).join("");
   if(asub==="colors")return h+`<div class="card2"><div class="rw"><input type="text" id="n1" placeholder="${a("title")}"><input type="color" id="n2" value="#e86a0c" style="width:70px"></div><button class="btn" data-a="addc">${a("add")}</button></div>`+
     D.colors.map(c=>`<div class="card2 rw"><i class="chip" style="padding:0;width:22px;height:22px;background:${esc(c.hex)}"></i><b style="flex:1">${esc(c.name)}</b><button class="chip ${c.in_stock?"on":""}" data-a="stock" data-id="${c.id}">${a("stock")}</button><button class="link" data-a="delc" data-id="${c.id}">${a("del")}</button></div>`).join("");
@@ -147,6 +161,11 @@ async function onClick(e){
   if(k==="asub"){asub=n;return render()}
   if(k==="new"){sel.open=id;tab="order";return render()}
   if(k==="out")return sb.auth.signOut();
+  if(k==="th"){
+    n?document.documentElement.dataset.theme=n:delete document.documentElement.dataset.theme;
+    n?localStorage.setItem("theme",n):localStorage.removeItem("theme");
+    b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));return;
+  }
   if(k==="pl"||k==="co"){
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
     if(k==="pl"){sel.plastic=n;const p=D.plastics.find(x=>x.name===n);document.getElementById("pdesc").textContent=p?p.descr||"":""}else sel.color=n;return;
@@ -176,6 +195,7 @@ async function onChange(e){
   const t=e.target,c=t.dataset.c;if(!c)return;
   if(c==="th"){t.value?document.documentElement.dataset.theme=t.value:delete document.documentElement.dataset.theme;
     t.value?localStorage.setItem("theme",t.value):localStorage.removeItem("theme");return}
+  if(c==="fp"){const l=t.closest(".fp");l.classList.toggle("has",!!t.files[0]);l.querySelector("span").textContent=t.files[0]?t.files[0].name:l.dataset.x;return}
   if(c==="cl"){sel.cl=t.value;return render()}
   run(async()=>{
     if(c==="st")await sb.from("orders").update({status:t.value}).eq("id",t.dataset.id);
