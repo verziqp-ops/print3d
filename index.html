@@ -284,7 +284,7 @@ $("npGo").onclick=async()=>{
   if(p.length<8){$("nperr").textContent=T[lang].ePass;return}
   const {error}=await sb.auth.updateUser({password:p});
   if(error){$("nperr").textContent=T[lang].eGen;return}
-  recovering=false;$("np").value="";$("nperr").textContent="";show("welcomeCard");
+  recovering=false;$("np").value="";$("nperr").textContent="";window.openApp?openApp():show("welcomeCard");
 };
 
 if(sb){
@@ -293,11 +293,11 @@ if(sb){
     $("loginBtn").classList.toggle("hide",!!user);
     $("logoutBtn").classList.toggle("hide",!user);
     if(ev==="PASSWORD_RECOVERY"){recovering=true;show("newPassCard")}
-    else if(ev==="SIGNED_OUT"){recovering=false;show("formCard")}
+    else if(ev==="SIGNED_OUT"){recovering=false;window.closeApp&&closeApp();show("formCard")}
     else if(user&&!recovering){
       const m=user.user_metadata||{};
       $("who").textContent=((m.first_name||"")+" "+(m.last_name||"")).trim()||user.email;
-      show("welcomeCard");
+      window.openApp?openApp():show("welcomeCard");
     }
   });
 }
@@ -316,5 +316,6 @@ function startPoll(em,pw){if(!sb)return;stopPoll();pollA=[em,pw];pollStart=Date.
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pollA)pollTick()});
 setLang(lang);
 </script>
+<script src="app.js"></script>
 </body>
 </html>
