@@ -98,7 +98,7 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
     </div>
     <div class="lang"><button data-l="uk">UA</button><button data-l="ru">RU</button></div>
   </div>
- 
+
   <div class="card" id="formCard">
     <h1 data-t="title"></h1>
     <p class="sub" data-t="sub"></p>
@@ -124,7 +124,7 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
     </div>
     <p class="demo hide" id="demo"></p>
   </div>
- 
+
   <div class="card done hide" id="doneCard">
     <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></div>
     <h1 data-t="doneTitle"></h1>
@@ -132,20 +132,20 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
     <button class="btn ghost" id="back" data-t="back"></button>
   </div>
 </div>
- 
+
 <dialog id="dlg">
   <h2 data-t="policy"></h2>
   <div id="polText"></div>
   <button class="btn" id="closeDlg" data-t="close"></button>
 </dialog>
- 
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===== ВСТАВ СВОЇ ДАНІ З SUPABASE (Project Settings -> API) =====
-const SUPABASE_URL = "";
-const SUPABASE_KEY = "";
+const SUPABASE_URL = "https://lcrdmksxkgwqkmhfwjan.supabase.co";
+const SUPABASE_KEY = "sb_publishable_UiYXZjA48EyAXGEsjtPdhA_4Ak78FZL";
 // ================================================================
- 
+
 const T = {
   uk:{title:"Створити акаунт",sub:"Замовляйте 3D друк і стежте за статусом",first:"Ім'я",last:"Прізвище",
     email:"Електронна пошта",pass:"Пароль (мін. 8 символів)",agree:"Я погоджуюсь на обробку персональних даних згідно з",
@@ -167,7 +167,7 @@ const T = {
 const $=id=>document.getElementById(id);
 const sb=(SUPABASE_URL&&SUPABASE_KEY&&window.supabase)?supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
 let lang=localStorage.getItem("lang")||"uk";
- 
+
 function setLang(l){
   lang=l; try{localStorage.setItem("lang",l)}catch(e){}
   document.documentElement.lang=l;
@@ -177,15 +177,15 @@ function setLang(l){
   if(!sb){$("demo").textContent=T[l].demo;$("demo").classList.remove("hide")}
 }
 document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>setLang(b.dataset.l));
- 
+
 $("ok").onchange=()=>$("go").disabled=!$("ok").checked;
 $("eye").onclick=()=>{const p=$("pw");p.type=p.type==="password"?"text":"password"};
 $("pol").onclick=()=>$("dlg").showModal();
 $("closeDlg").onclick=()=>$("dlg").close();
 $("back").onclick=()=>{$("doneCard").classList.add("hide");$("formCard").classList.remove("hide")};
- 
+
 function fail(msg,...ids){$("err").textContent=msg;ids.forEach(i=>$(i).classList.add("bad"))}
- 
+
 $("go").onclick=async()=>{
   document.querySelectorAll("input").forEach(i=>i.classList.remove("bad"));$("err").textContent="";
   const fn=$("fn").value.trim(),ln=$("ln").value.trim(),em=$("em").value.trim(),pw=$("pw").value;
