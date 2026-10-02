@@ -223,7 +223,7 @@ $("ok").onchange=()=>$("go").disabled=!$("ok").checked;
 $("eye").onclick=()=>{const p=$("pw");p.type=p.type==="password"?"text":"password"};
 $("pol").onclick=()=>$("dlg").showModal();
 $("closeDlg").onclick=()=>$("dlg").close();
-$("back").onclick=()=>{$("doneCard").classList.add("hide");$("formCard").classList.remove("hide")};
+$("back").onclick=()=>{stopPoll();$("doneCard").classList.add("hide");$("formCard").classList.remove("hide")};
 
 function fail(msg,...ids){$("err").textContent=msg;ids.forEach(i=>$(i).classList.add("bad"))}
 
@@ -241,7 +241,7 @@ $("go").onclick=async()=>{
       if(error)throw error;
       if(data.user&&data.user.identities&&data.user.identities.length===0)throw {used:true};
     }
-    $("sentTo").textContent=em;
+    $("sentTo").textContent=em;startPoll(em,pw);
     $("formCard").classList.add("hide");$("doneCard").classList.remove("hide");
   }catch(e){
     fail(e&&(e.used||/registered/i.test(e.message||""))?T[lang].eUsed:T[lang].eGen,"em");
@@ -301,6 +301,19 @@ if(sb){
     }
   });
 }
+// ===== Автовхід на пристрої, де була реєстрація =====
+// Поки відкрито екран "Перевірте пошту", сайт кожні 12 с пробує увійти.
+// Щойно пошту підтверджено (на будь-якому пристрої), вхід спрацює сам.
+let pollT=null,pollA=null,pollStart=0;
+async function pollTick(){
+  if(!pollA)return;
+  if(user||Date.now()-pollStart>9e5)return stopPoll();
+  const {error}=await sb.auth.signInWithPassword({email:pollA[0],password:pollA[1]});
+  if(!error)stopPoll();
+}
+function stopPoll(){clearInterval(pollT);pollT=null;pollA=null}
+function startPoll(em,pw){if(!sb)return;stopPoll();pollA=[em,pw];pollStart=Date.now();pollT=setInterval(pollTick,12000)}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pollA)pollTick()});
 setLang(lang);
 </script>
 </body>
