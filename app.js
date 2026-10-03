@@ -50,7 +50,7 @@ body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8
 .bg-art{position:absolute;inset:-2%;animation:matteDrift 14s ease-in-out infinite alternate;will-change:transform}
 #bubbles::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.22) 100%)}
 @keyframes matteDrift{0%{transform:translate3d(-1%,-.7%,0) scale(1.015) rotate(-.35deg)}50%{transform:translate3d(1.2%,.8%,0) scale(1.03) rotate(.1deg)}100%{transform:translate3d(-.8%,1.1%,0) scale(1.02) rotate(.4deg)}}
-.bg-art svg{display:block;width:100%;height:100%}.matte-piece{animation:matteFloat var(--float-time,9s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s);will-change:transform}
+.bg-art svg{display:block;width:100%;height:100%;filter:contrast(1.06)}.matte-piece{animation:matteFloat var(--float-time,9s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s);will-change:transform}
 @keyframes matteFloat{from{transform:translate(var(--float-x,-12px),-15px)}to{transform:translate(calc(var(--float-x,-12px) * -1),18px)}}
 #bubbles.bg-paused .bg-art,#bubbles.bg-paused .matte-piece{animation-play-state:paused}
 @media(max-width:760px){.bg-art{background-position:48% center}.bg-parallax{transition-duration:1.8s}}
@@ -774,8 +774,9 @@ function initBackground(){
  if(bub)return;document.body.classList.add('bg-ready');
  bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');const pieces=[[615,231,64,68],[529,369,49,48],[838,121,36,36],[803,423,218,158],[1168,485,116,150],[1457,348,42,43],[857,868,45,45],[1608,436,67,71]];
  const asset='assets/matte-background-hq.webp?v=20261003-alive18';
- const defs=pieces.map(([x,y,rx,ry],i)=>`<clipPath id="matte-clip-${i}"><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/></clipPath>`).join('');
- const holes=pieces.map(([x,y,rx,ry])=>`<ellipse cx="${x}" cy="${y}" rx="${rx+4}" ry="${ry+4}" fill="black"/>`).join('');
+ const region=(p,extra=0)=>{const [x,y,rx,ry]=p;if(x===1168)return `<ellipse cx="1208" cy="402" rx="${60+extra}" ry="${59+extra}"/><ellipse cx="1168" cy="516" rx="${106+extra}" ry="${100+extra}"/>`;return `<ellipse cx="${x}" cy="${y}" rx="${rx+extra}" ry="${ry+extra}"/>`};
+ const defs=pieces.map((p,i)=>`<clipPath id="matte-clip-${i}">${region(p)}</clipPath>`).join('');
+ const holes=pieces.map(p=>`<g fill="black">${region(p,4)}</g>`).join('');
  const floats=pieces.map((_,i)=>`<g class="matte-piece" style="--float-time:${7+i%4*1.5}s;--float-delay:-${i*1.7}s;--float-x:${i%2?10:-12}px"><g clip-path="url(#matte-clip-${i})"><image href="${asset}" width="1672" height="941"/></g></g>`).join('');
  bub.innerHTML=`<div class="bg-parallax"><div class="bg-art"><svg viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>${defs}<mask id="matte-base" maskUnits="userSpaceOnUse" x="0" y="0" width="1672" height="941"><rect width="1672" height="941" fill="white"/>${holes}</mask></defs><image href="${asset}" width="1672" height="941" mask="url(#matte-base)"/>${floats}</svg></div></div>`;document.body.appendChild(bub);
  const motion=matchMedia('(prefers-reduced-motion:reduce)'),fine=matchMedia('(hover:hover) and (pointer:fine)');let frame=0,x=0,y=0;
