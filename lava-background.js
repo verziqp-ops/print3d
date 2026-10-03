@@ -1,23 +1,26 @@
 (function(root){'use strict';
 // Independent depth fields: drops merge only within their own layer.
-// Compact influence keeps distant drops apart; soft normals add volume.
+// Flat fills, progressively darker colors and blur provide 2D depth.
 function unit(n){let x=(n+0x9e3779b9)|0;x=Math.imul(x^(x>>>16),0x21f0aaad);x=Math.imul(x^(x>>>15),0x735a2d97);return ((x^(x>>>15))>>>0)/4294967296}
-const palettes=[[244,112,25],[220,83,15],[168,52,10],[250,128,34],[193,68,13]];
-const layers=[{depth:.62,size:.72,blur:12,opacity:.48},{depth:.8,size:.9,blur:5,opacity:.76},{depth:1,size:1,blur:0,opacity:1}];
+const layers=[
+ {depth:.62,size:.72,blur:12,opacity:.6,colors:[[72,26,12],[35,28,24]]},
+ {depth:.8,size:.9,blur:5,opacity:.8,colors:[[157,51,10],[112,33,8]]},
+ {depth:1,size:1,blur:0,opacity:1,colors:[[232,89,17]]}
+];
 function balls(width,height,scroll,time,layer=2){
- const config=layers[layer],scale=Math.min(1.35,Math.max(.65,width/1100)),band=245*scale,rise=time*(10+layer*3)*scale,out=[];
- const world=scroll*config.depth+rise,margin=180*scale;
- for(let row=Math.floor((world-margin)/band)-1;row<=Math.ceil((world+height+margin)/band);row++){
-  const seed=row*53+layer*937+71,cx=width*(.07+unit(seed)*.86),cy=row*band+unit(seed+2)*band*.65-world;
-  const phase=time*.13+unit(seed+3)*Math.PI*2,radius=(30+unit(seed+4)*26)*scale*config.size;
-  const split=radius*(1.15+.55*Math.sin(phase*.8+row));
-  for(let i=0;i<2;i++){
-   const angle=phase*.36+i*Math.PI+row;
-   const dark=unit(seed+i*17+8)>.67;
-   out.push({id:row*2+i,layer,x:cx+Math.cos(phase*.65+row)*width*.036+Math.cos(angle)*split,
-    y:cy+Math.sin(phase+row)*band*.018+Math.sin(angle)*split,
-    r:radius*(i===0?1:.65+.08*Math.sin(phase+i)),
-    color:dark?[40,37,35]:palettes[Math.floor(unit(seed+i*29+12)*palettes.length)]});
+ const config=layers[layer],scale=Math.min(1.35,Math.max(.65,width/1100)),band=490*scale,out=[];
+ // Independent streams have their own speed and spawn continuously below.
+ for(let i=0;i<4;i++){
+  const speed=(5+layer*2+unit(layer*109+i*31+43)*10)*scale;
+  const world=scroll*config.depth+time*speed,margin=180*scale;
+  for(let row=Math.floor((world-margin)/band)-1;row<=Math.ceil((world+height+margin)/band);row++){
+   const seed=row*53+layer*937+Math.floor(i/2)*167+71,cx=width*(.07+unit(seed)*.86),cy=row*band+unit(seed+2)*band*.65-world;
+   const phase=time*(.085+unit(seed+i*9+3)*.065)+unit(seed+3)*Math.PI*2;
+   const radius=(18+unit(seed+i*19+4)*42)*scale*config.size;
+   const split=radius*(1.15+.55*Math.sin(phase*.8+row)),angle=phase*.36+i*Math.PI+row;
+   out.push({id:row*4+i,layer,speed,x:cx+Math.cos(phase*.65+row)*width*.036+Math.cos(angle)*split,
+    y:cy+Math.sin(phase+row)*band*.018+Math.sin(angle)*split,r:radius,
+    color:config.colors[Math.floor(unit(seed+i*29+12)*config.colors.length)]});
   }
  }return out;
 }
@@ -44,21 +47,17 @@ function contours(width,height,items,step){
  }return paths;
 }
 function trace(ctx,paths){ctx.beginPath();for(const path of paths){const last=path[path.length-1],first=path[0];ctx.moveTo((last.x+first.x)/2,(last.y+first.y)/2);for(let i=0;i<path.length;i++){const p=path[i],q=path[(i+1)%path.length];ctx.quadraticCurveTo(p.x,p.y,(p.x+q.x)/2,(p.y+q.y)/2)}ctx.closePath()}}
-// Blend each drop's own color by its field strength, including black/orange
-// necks. Shared diffuse light gives depth without hard glossy highlights.
+// Only the two rear palettes blend at joins. No surface lighting or shading.
 function colorField(items,width,height,data){
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-  let weight=0,red=0,green=0,blue=0,nx=0,ny=0,nz=0;
+  let weight=0,red=0,green=0,blue=0;
   for(const b of items){const dx=(x-b.x)/b.r,dy=(y-b.y)/b.r,d2=dx*dx+dy*dy;
    if(d2>6.25)continue;
    const f=1/(d2+.22),a=f*f*f;
    weight+=a;red+=a*b.color[0];green+=a*b.color[1];blue+=a*b.color[2];
-   nx+=a*dx;ny+=a*dy;nz+=a*Math.sqrt(Math.max(.04,1-d2*.7));
   }
   const at=(y*width+x)*4;if(!weight){data[at+3]=0;continue}
-  const norm=Math.hypot(nx,ny,nz),light=Math.max(0,(-nx*.4-ny*.55+nz*.73)/norm);
-  const shade=.38+.67*light,sheen=Math.pow(light,14)*12;
-  data[at]=red/weight*shade+sheen;data[at+1]=green/weight*shade+sheen*.45;data[at+2]=blue/weight*shade+sheen*.22;data[at+3]=255;
+  data[at]=red/weight;data[at+1]=green/weight;data[at+2]=blue/weight;data[at+3]=255;
  }
 }
 function mount(host){
@@ -68,6 +67,7 @@ function mount(host){
  const render=()=>{for(let layer=0;layer<surfaces.length;layer++){
   const {ctx,texture,ink,pixels}=surfaces[layer];ctx.clearRect(0,0,w,h);
   const items=balls(w,h,offset,time,layer),paths=contours(w,h,items,Math.max(4,Math.sqrt(w*h/11000)));
+  if(layers[layer].colors.length===1){trace(ctx,paths);ctx.fillStyle=`rgb(${layers[layer].colors[0].join(',')})`;ctx.fill('evenodd');continue}
   const sx=texture.width/w,sy=texture.height/h;
   colorField(items.map(b=>({...b,x:b.x*sx,y:b.y*sy,r:b.r*sx})),texture.width,texture.height,pixels.data);ink.putImageData(pixels,0,0);
   ctx.save();trace(ctx,paths);ctx.clip('evenodd');ctx.imageSmoothingEnabled=true;ctx.drawImage(texture,0,0,w,h);ctx.restore();
