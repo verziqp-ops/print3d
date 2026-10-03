@@ -134,7 +134,8 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .cth .chat{max-width:none;margin:0}.back{display:none;margin-bottom:8px}
 @media(max-width:760px){.cw{grid-template-columns:1fr}.cw.has .clist{display:none}.cw:not(.has) .cth{display:none}.back{display:inline-block}}
 .cin{display:flex;gap:8px;align-items:center;margin-top:10px}.cin input[type=text]{flex:1}
-.chip:disabled{opacity:.45;cursor:not-allowed}.org-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.org-panel h2{margin-top:12px!important}.org-preview{height:420px;background:radial-gradient(ellipse at top,rgba(255,138,31,.08),rgba(0,0,0,.25));border:1px solid var(--line);border-radius:22px;overflow:hidden;display:grid;place-items:center}.org-preview canvas{display:block;width:100%;height:100%}@media(max-width:760px){.org-panel{grid-template-columns:1fr}.org-preview{height:340px}}
+.chip:disabled{opacity:.45;cursor:not-allowed}.studio{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.studio h2{margin-top:12px!important}.studio-right{position:sticky;top:100px;align-self:start}.studio-slider>div{display:flex;gap:10px;align-items:center}.studio-slider input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}.studio-slider input[type=number]{width:82px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text);font:14px var(--f)}#vase-profile{width:100%;max-height:320px;touch-action:none;background:var(--field);border-radius:18px}#vase-profile circle{cursor:grab}@media(max-width:760px){.studio{grid-template-columns:1fr}.studio-right{order:-1;position:sticky;top:8px;z-index:4;background:rgba(14,10,7,.97);border-radius:18px;padding:8px}.studio-right .org-preview{height:210px}.studio-right>.mut{display:none}.studio-right .rw{margin:4px 0}.studio-right .f{margin:0}}
+.org-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.org-panel h2{margin-top:12px!important}.org-preview{height:420px;background:radial-gradient(ellipse at top,rgba(255,138,31,.08),rgba(0,0,0,.25));border:1px solid var(--line);border-radius:22px;overflow:hidden;display:grid;place-items:center}.org-preview canvas{display:block;width:100%;height:100%}@media(max-width:760px){.org-panel{grid-template-columns:1fr}.org-preview{height:340px}}
 .calc-panel{max-width:720px}.calc-panel h2{margin-top:12px!important}.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}.calc-fields input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--text);font:16px var(--f)}.calc-breakdown{display:grid;grid-template-columns:1fr auto;gap:10px;padding:18px 0;border-top:1px solid var(--line)}.calc-totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 20px}.calc-totals>div{padding:18px;border-radius:18px;background:var(--field);border:1px solid var(--line)}.calc-totals span{display:block;font-size:12px;color:var(--muted)}.calc-totals strong{display:block;font-size:25px;margin-top:8px;color:var(--accent);overflow-wrap:anywhere}@media(max-width:450px){.calc-fields,.calc-totals{grid-template-columns:1fr}}
 .g-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.g-modes .pill{margin-left:auto;font-size:9px;letter-spacing:1.4px}.g-progress{height:4px;background:var(--field);border-radius:4px;overflow:hidden;margin-top:12px}.g-progress i{display:block;height:100%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
 .m{white-space:pre-wrap}.m a{color:inherit;text-decoration:underline}.m{animation:message-in .5s var(--sp)}
@@ -324,7 +325,7 @@ let orgValues={...ORG_DEFAULT},orgModel=null,orgViewer=null,orgTimer=null;
 try{orgValues={...ORG_DEFAULT,...JSON.parse(localStorage.getItem('print3d:organizer')||'{}')}}catch(e){}
 function organizerHTML(){
   const fields=[['width','Ширина, мм'],['depth','Глибина, мм'],['height','Висота, мм'],['columns','Колонки'],['rows','Ряди'],['wall','Товщина стінок, мм'],['bottom','Товщина дна, мм']];
-  return `<div class="tabs"><span class="chip on">Органайзер</span></div><section class="card2 org-panel"><div><span class="pill">PRINT3D / GENERATOR</span><h2>Генератор органайзерів</h2><p class="mut">Задай зовнішні розміри в міліметрах. Відділення однакового розміру, верх відкритий.</p>
+  return `<section class="card2 org-panel"><div><span class="pill">PRINT3D / GENERATOR</span><h2>Генератор органайзерів</h2><p class="mut">Задай зовнішні розміри в міліметрах. Відділення однакового розміру, верх відкритий.</p>
   <div class="chips"><button class="chip" data-a="org-preset" data-n="desk">Для столу</button><button class="chip" data-a="org-preset" data-n="drawer">Для шухляди</button><button class="chip" data-a="org-preset" data-n="pens">Для ручок</button></div>
   <div class="calc-fields" style="margin-top:16px">${fields.map(([key,label])=>`<label class="f"><span>${label}</span><input type="number" data-org="${key}" min="${['rows','columns'].includes(key)?1:['width','depth'].includes(key)?10:key==='height'?5:.8}" ${['rows','columns'].includes(key)?'max="12" step="1"':'step="0.1"'} value="${esc(orgValues[key])}"></label>`).join('')}<label class="f"><span>Колір прев’ю</span><input type="color" data-org="color" value="${esc(orgValues.color)}" style="height:44px;width:100%"></label></div>
   <p class="err" id="org-error" role="status"></p><p class="mut" id="org-info"></p><p class="mut" id="org-fit"></p>
@@ -369,6 +370,8 @@ async function mountOrganizer(){
   }catch(e){console.error('Organizer preview',e);if(host.isConnected)host.innerHTML='<p class="mut">3D-прев’ю недоступне. Генерація та завантаження STL працюють.</p>'}
 }
 
+let generatorKind='organizer';
+const generatorTabs=()=>`<div class="tabs">${[['organizer','Органайзер'],['tray','Лотки під предмети'],['vase','Вази']].map(([key,name])=>`<button class="chip ${generatorKind===key?'on':''}" data-a="genkind" data-n="${key}">${name}</button>`).join('')}</div>`;
 async function admin(){
   let h=tabs([["orders",a("orders")],["calc","Калькулятор"],["generators",lang==="ru"?"Генераторы":"Генератори"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
   if(asub==="orders"){
@@ -379,7 +382,7 @@ async function admin(){
       ((o.data||[]).filter(x=>!fcl||x.user_id===fcl).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
   if(asub==="calc")return h+calculatorHTML();
-  if(asub==="generators")return h+organizerHTML();
+  if(asub==="generators")return h+generatorTabs()+(generatorKind==='organizer'?organizerHTML():window.Print3DStudio.html(generatorKind));
   if(asub==="prods"){
     const e=EP();
     return h+`<div class="card2" style="max-width:560px"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(e.title)}"></label>
@@ -414,7 +417,7 @@ function updateHeaderScroll(reset=false){
   headerY=y;
 }
 async function render(){
-  clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
+  window.Print3DStudio?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
@@ -422,7 +425,7 @@ async function render(){
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   view.innerHTML=h;
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
-  if(tab==="prof"&&sub==="adm"&&asub==="generators")mountOrganizer();
+  if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
@@ -669,6 +672,7 @@ async function onClick(e){
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
   if(k==="asub"){asub=n;return render()}
+  if(k==="genkind"){generatorKind=n;return render()}
   if(k==="org-download")return downloadOrganizer();
   if(k==="org-preset")return organizerPreset(n);
   if(k==="org-reset")return organizerPreset('default');
