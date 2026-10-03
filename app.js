@@ -322,110 +322,87 @@ function openProduct(id){
 }
 const ORD={};
 function parseG(txt){
-  const lines=txt.split("\n"),layers=[];
-  let x=0,y=0,z=0,e=0,f=1500,rx=false,re=false,t=0,cz=null,cur=null,sT=null;
+  const lines=txt.split(/\r?\n/),layers=[];
+  let x=0,y=0,z=0,e=0,f=1500,rx=false,re=false,t=0,cz=null,cur=null;
+  let modelTime=null,totalTime=null,totalLayers=null,maxZ=null;
+  const parseDuration=s=>{
+    const m=String(s).match(/(?:(\d+)\s*d(?:ays?)?\s*)?(?:(\d+)\s*h(?:ours?)?\s*)?(?:(\d+)\s*m(?:in(?:utes?)?)?\s*)?(?:(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?)/i);
+    if(!m)return null;
+    return (+m[1]||0)*86400+(+m[2]||0)*3600+(+m[3]||0)*60+(+m[4]||0);
+  };
   for(let i=0;i<lines.length;i++){
-    let ln=lines[i];
-    if(ln.charCodeAt(0)===59){
-      if(sT==null){let m=ln.match(/^;TIME:(\d+)/);
-        if(m)sT=+m[1];
-        else if(/estimated (printing )?time/i.test(ln)){m=ln.match(/=\s*(?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?/);if(m)sT=((+m[1]||0)*86400+(+m[2]||0)*3600+(+m[3]||0)*60+(+m[4]||0))||null}}
+    let raw=lines[i],ln=raw.trim();
+    if(ln.startsWith(";")){
+      let m=ln.match(/model printing time\s*[:=]\s*(.*?)(?:;|$)/i);
+      if(m){const v=parseDuration(m[1]);if(v!=null)modelTime=v}
+      m=ln.match(/total estimated time\s*[:=]\s*(.*?)(?:;|$)/i);
+      if(m){const v=parseDuration(m[1]);if(v!=null)totalTime=v}
+      m=ln.match(/total layer number\s*[:=]\s*(\d+)/i);if(m)totalLayers=+m[1];
+      m=ln.match(/max_z_height\s*[:=]\s*([\d.]+)/i);if(m)maxZ=+m[1];
       continue;
     }
     const c=ln.indexOf(";");if(c>=0)ln=ln.slice(0,c);
     ln=ln.trim();if(!ln)continue;
-    const w=ln.split(/\s+/),cmd=w[0];
-    if(cmd==="G90"){rx=false;continue}if(cmd==="G91"){rx=true;continue}
-    if(cmd==="M82"){re=false;continue}if(cmd==="M83"){re=true;continue}
-    if(cmd==="G92"){for(let k=1;k<w.length;k++)if(w[k][0]==="E")e=parseFloat(w[k].slice(1))||0;continue}
+    const w=ln.split(/\s+/),cmd=w[0].toUpperCase();
+    if(cmd==="G90"){rx=false;continue} if(cmd==="G91"){rx=true;continue}
+    if(cmd==="M82"){re=false;continue} if(cmd==="M83"){re=true;continue}
+    if(cmd==="G92"){for(let k=1;k<w.length;k++)if(w[k][0]?.toUpperCase()==="E")e=parseFloat(w[k].slice(1))||0;continue}
     if(cmd!=="G0"&&cmd!=="G1")continue;
     let nx=x,ny=y,nz=z,ne=e,eIn=0;
     for(let k=1;k<w.length;k++){
       const v=parseFloat(w[k].slice(1));if(isNaN(v))continue;
-      switch(w[k][0]){case"X":nx=rx?x+v:v;break;case"Y":ny=rx?y+v:v;break;case"Z":nz=rx?z+v:v;break;
-        case"E":eIn=re?v:v-e;ne=re?e+v:v;break;case"F":f=v||f}
+      const q=w[k][0].toUpperCase();
+      switch(q){case"X":nx=rx?x+v:v;break;case"Y":ny=rx?y+v:v;break;case"Z":nz=rx?z+v:v;break;case"E":eIn=re?v:v-e;ne=re?e+v:v;break;case"F":f=v||f;break}
     }
-    const dx=nx-x,dy=ny-y,d=Math.hypot(dx,dy,nz-z),dt=d/(f/60);
-    t+=dt;
-    if(eIn>0&&(dx||dy)){
+    const dx=nx-x,dy=ny-y,dz=nz-z,d=Math.hypot(dx,dy,dz),dt=d/(Math.max(1,f)/60),t0=t;t+=dt;
+    if(eIn>0&&(dx||dy||dz)){
       if(cz===null||Math.abs(nz-cz)>1e-4){cz=nz;cur={z:nz,s:[],t:[],t0:t-dt};layers.push(cur)}
       cur.s.push(x,y,nx,ny);cur.t.push(t);
     }
     x=nx;y=ny;z=nz;e=ne;
   }
-  const k=sT&&t?sT/t:1;
-  for(const L of layers){L.s=Float32Array.from(L.s);L.t=Float32Array.from(L.t,v=>v*k);L.t0*=k;L.t1=L.t[L.t.length-1]}
-  return {layers,T:t*k};
+  const rawPathTime=t,target=modelTime||totalTime||rawPathTime,k=target&&rawPathTime?target/rawPathTime:1;
+  for(const L of layers){L.s=Float32Array.from(L.s);L.t=Float32Array.from(L.t,v=>v*k);L.t0*=k;L.t1=L.t.length?L.t[L.t.length-1]:L.t0}
+  return {layers,T:target||rawPathTime,modelTime,totalTime,totalLayers,maxZ};
 }
 async function gview(box,url,o){
-  box.innerHTML=`<p class="mut">…</p>`;let G;
-  try{const r=await fetch(url);if(!r.ok)throw 0;G=parseG(await r.text())}catch(e){box.innerHTML=`<p class="mut">${a("err")}</p>`;return}
-  if(!box.isConnected)return;
-  if(!G.layers.length){box.innerHTML=`<p class="mut">${a("err")}</p>`;return}
-  let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9,mxz=0;
-  for(const L of G.layers){if(L.z>mxz)mxz=L.z;for(let i=0;i<L.s.length;i+=2){const X=L.s[i],Y=L.s[i+1];if(X<mnx)mnx=X;if(X>mxx)mxx=X;if(Y<mny)mny=Y;if(Y>mxy)mxy=Y}}
-  const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,pad=12,C=.866,Sn=.5;
-  const pr=(x,y,z)=>[(x-cx-(y-cy))*C,((x-cx)+(y-cy))*Sn-z*.95];
-  const corners=[];for(const X of[mnx-pad,mxx+pad])for(const Y of[mny-pad,mxy+pad])for(const Z of[0,mxz])corners.push(pr(X,Y,Z));
-  const bx0=Math.min(...corners.map(p=>p[0])),bx1=Math.max(...corners.map(p=>p[0])),by0=Math.min(...corners.map(p=>p[1])),by1=Math.max(...corners.map(p=>p[1]));
-  box.innerHTML=`<canvas></canvas><div class="gc"><button class="ib" id="gp">▶</button><input type="range" id="gs" min="0" max="1000" value="1000">${o.started?`<button class="chip" id="gl2">${a("live")}</button>`:""}</div><div class="gl" id="gl"></div>`;
-  const cv=box.querySelector("canvas"),ctx=cv.getContext("2d"),dpr=Math.min(devicePixelRatio||1,2);
-  const W=cv.width=Math.round(box.clientWidth*dpr),H=cv.height=W;
-  const sc=Math.min(W*.9/(bx1-bx0),H*.9/(by1-by0)),ox=W/2-(bx0+bx1)/2*sc,oy=H/2-(by0+by1)/2*sc;
-  let px=0,py=0;const P=(x,y,z)=>{px=ox+(x-cx-(y-cy))*C*sc;py=oy+(((x-cx)+(y-cy))*Sn-z*.95)*sc};
-  const buf=document.createElement("canvas");buf.width=W;buf.height=H;const bc=buf.getContext("2d");let done=0;
-  const lw=Math.max(1.2,sc*.5);
-  const col=z=>`hsl(24,100%,${28+40*z/(mxz||1)}%)`;
-  const stroke=(c,L,n)=>{c.beginPath();for(let i=0;i<n*4;i+=4){P(L.s[i],L.s[i+1],L.z);c.moveTo(px,py);P(L.s[i+2],L.s[i+3],L.z);c.lineTo(px,py)}c.stroke()};
-  const drawBuf=n=>{if(n<done){bc.clearRect(0,0,W,H);done=0}bc.lineWidth=lw;bc.lineCap="round";for(;done<n;done++){const L=G.layers[done];bc.strokeStyle=col(L.z);stroke(bc,L,L.t.length)}};
-  const T=G.T,n=G.layers.length;
-  let live=!!(o.started&&o.status==="printing"),play=false,tm=live?Math.min(T,(Date.now()-o.started)/1000):T,dirty=true,drag=false;
-  const gp=box.querySelector("#gp"),gs=box.querySelector("#gs"),gl=box.querySelector("#gl"),gl2=box.querySelector("#gl2");
-  const upper=(arr,v)=>{let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(arr[m]>v)hi=m;else lo=m+1}return lo};
-  function head(x,y){
-    const s=Math.max(10,W*.035);ctx.save();ctx.translate(x,y);
-    const g=ctx.createRadialGradient(0,0,0,0,0,s*1.7);g.addColorStop(0,"rgba(255,140,30,.6)");g.addColorStop(1,"rgba(255,140,30,0)");
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,s*1.7,0,7);ctx.fill();
-    ctx.fillStyle="#555";ctx.fillRect(-s*.7,-s*2.3,s*1.4,s*.5);
-    ctx.fillStyle="#d9d9d9";ctx.fillRect(-s*.45,-s*1.8,s*.9,s*1.2);
-    ctx.fillStyle="#ff8a1f";ctx.beginPath();ctx.moveTo(-s*.3,-s*.6);ctx.lineTo(s*.3,-s*.6);ctx.lineTo(0,0);ctx.closePath();ctx.fill();ctx.restore();
-  }
-  function frame(){
-    let lo=0,hi=n;while(lo<hi){const m=(lo+hi)>>1;if(G.layers[m].t1<=tm)lo=m+1;else hi=m}
-    const li=lo;drawBuf(li);
-    ctx.clearRect(0,0,W,H);
-    ctx.beginPath();[[mnx-pad,mny-pad],[mxx+pad,mny-pad],[mxx+pad,mxy+pad],[mnx-pad,mxy+pad]].forEach(([X,Y],i)=>{P(X,Y,0);i?ctx.lineTo(px,py):ctx.moveTo(px,py)});
-    ctx.closePath();ctx.fillStyle="rgba(255,255,255,.05)";ctx.fill();ctx.strokeStyle="rgba(255,255,255,.18)";ctx.lineWidth=1;ctx.stroke();
-    ctx.drawImage(buf,0,0);
-    let hx,hy;
-    if(li<n){
-      const L=G.layers[li],k=upper(L.t,tm);
-      ctx.strokeStyle="#ffc27a";ctx.lineWidth=lw*1.2;ctx.lineCap="round";stroke(ctx,L,k);
-      let x,y;
-      if(k<L.t.length){const pv=k?L.t[k-1]:L.t0,f=Math.min(1,Math.max(0,(tm-pv)/Math.max(1e-6,L.t[k]-pv))),i=k*4;
-        x=L.s[i]+(L.s[i+2]-L.s[i])*f;y=L.s[i+1]+(L.s[i+3]-L.s[i+1])*f}
-      else{const i=(L.t.length-1)*4;x=L.s[i+2];y=L.s[i+3]}
-      P(x,y,L.z);hx=px;hy=py;
-    }else{const L=G.layers[n-1],i=(L.t.length-1)*4;P(L.s[i+2],L.s[i+3],L.z);hx=px;hy=py}
-    head(hx,hy);
-    const rem=Math.max(0,Math.round((T-tm)/60));
-    gl.textContent=`${a("layer")} ${Math.min(li+1,n)} / ${n} · ${a("left")} ${rem?fmt(rem):"<1 "+(lang==="ru"?"мин":"хв")}`;
-    gp.textContent=play?"❚❚":"▶";
-  }
-  gp.onclick=()=>{live=false;if(!play&&tm>=T)tm=0;play=!play;dirty=true};
-  gs.oninput=()=>{live=false;play=false;tm=gs.value/1000*T;dirty=true};
-  if(gl2)gl2.onclick=()=>{live=true;play=false;dirty=true};
-  let last=performance.now();
-  (function loop(now){
-    if(!box.isConnected)return;
-    const dt=(now-last)/1000;last=now;
-    if(live){tm=Math.min(T,(Date.now()-o.started)/1000);dirty=true}
-    else if(play){tm+=dt*T/30;if(tm>=T){tm=T;play=false}dirty=true}
-    if(dirty){gs.value=Math.round(tm/T*1000);frame();dirty=false}
-    requestAnimationFrame(loop);
-  })(last);
-}
-function openOrder(id){
+  box.innerHTML='<p class="mut">…</p>';let G;
+  try{const r=await fetch(url);if(!r.ok)throw 0;G=parseG(await r.text())}catch(e){console.error("G-code",e);box.innerHTML='<p class="mut">'+a("err")+'</p>';return}
+  if(!box.isConnected||!G.layers.length){box.innerHTML='<p class="mut">'+a("err")+'</p>';return}
+  try{
+    const {T,OrbitControls}=await load3();
+    let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9,mnz=1e9,mxz=-1e9;
+    const segs=[];
+    G.layers.forEach((L,layer)=>{
+      mnz=Math.min(mnz,L.z);mxz=Math.max(mxz,L.z);
+      for(let i=0;i<L.s.length;i+=4){const j=i/4,x1=L.s[i],y1=L.s[i+1],x2=L.s[i+2],y2=L.s[i+3];mnx=Math.min(mnx,x1,x2);mxx=Math.max(mxx,x1,x2);mny=Math.min(mny,y1,y2);mxy=Math.max(mxy,y1,y2);segs.push({x1,y1,x2,y2,z:L.z,t1:L.t[j]||L.t0,t0:j?L.t[j-1]:L.t0,layer})}
+    });
+    const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,span=Math.max(mxx-mnx,mxy-mny,mxz-mnz,1),scene=new T.Scene();
+    const pos=new Float32Array(segs.length*6),colors=new Float32Array(segs.length*6),color=new T.Color();
+    for(let i=0;i<segs.length;i++){const s=segs[i],p=i*6;pos[p]=s.x1-cx;pos[p+1]=s.z-mnz;pos[p+2]=-(s.y1-cy);pos[p+3]=s.x2-cx;pos[p+4]=s.z-mnz;pos[p+5]=-(s.y2-cy);color.setHSL(.07,.95,.34+.38*(s.z-mnz)/Math.max(1,mxz-mnz));for(let q=0;q<2;q++){colors[p+q*3]=color.r;colors[p+q*3+1]=color.g;colors[p+q*3+2]=color.b}}
+    const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(pos,3));geo.setAttribute("color",new T.BufferAttribute(colors,3));
+    const mat=new T.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.9});const path=new T.LineSegments(geo,mat);scene.add(path);
+    const plateSize=Math.max(span*1.18,20),pg=new T.PlaneGeometry(plateSize,plateSize),pm=new T.MeshBasicMaterial({color:0x24170e,transparent:true,opacity:.55,side:T.DoubleSide});
+    const plate=new T.Mesh(pg,pm);plate.rotation.x=-Math.PI/2;plate.position.y=-.18;scene.add(plate);
+    const grid=new T.GridHelper(plateSize,Math.max(10,Math.min(40,Math.round(plateSize/5))),0x7a4a27,0x3b2a1c);grid.position.y=-.16;scene.add(grid);
+    const nozzle=new T.Mesh(new T.ConeGeometry(Math.max(span*.012,.7),Math.max(span*.055,2.2),12),new T.MeshStandardMaterial({color:0xff8a1f,metalness:.2,roughness:.35,emissive:0x3a1600,emissiveIntensity:.45}));scene.add(nozzle);
+    scene.add(new T.HemisphereLight(0xffead6,0x120b06,1.9));const dl=new T.DirectionalLight(0xffffff,1.7);dl.position.set(span,span*1.5,span);scene.add(dl);
+    box.innerHTML='<div class="g3box"></div><div class="gc"><button class="ib" id="gp">▶</button><input type="range" id="gs" min="0" max="1000" value="1000">'+(o.started?'<button class="chip" id="gl2">'+a("live")+'</button>':'')+'</div><div class="gl" id="gl"></div>';
+    const host=box.querySelector(".g3box");host.style.cssText="width:100%;height:min(58vh,520px);min-height:330px;border-radius:20px;overflow:hidden;cursor:grab;";
+    const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight),r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});r.setPixelRatio(Math.min(devicePixelRatio||1,1.5));r.setSize(w,h);host.appendChild(r.domElement);
+    const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,span/1000),span*20);cam.position.set(span*.72,span*.68,span*.88);
+    const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.minDistance=span*.25;ct.maxDistance=span*4;ct.autoRotate=true;ct.autoRotateSpeed=1.2;ct.target.set(0,span*.18,0);ct.addEventListener("start",()=>{ct.autoRotate=false});
+    let play=false,live=!!(o.started&&o.status==="printing"),tm=live?Math.min(G.T,(Date.now()-o.started)/1000):G.T,dirty=true;
+    const gp=box.querySelector("#gp"),gs=box.querySelector("#gs"),gl=box.querySelector("#gl"),gl2=box.querySelector("#gl2"),totalSegs=segs.length;
+    function update(){
+      let lo=0,hi=totalSegs;while(lo<hi){const m=(lo+hi)>>1;if(segs[m].t1<=tm)lo=m+1;else hi=m}const full=lo;path.geometry.setDrawRange(0,full*2);
+      if(full<totalSegs){const s=segs[full],f=Math.min(1,Math.max(0,(tm-s.t0)/Math.max(.0001,s.t1-s.t0)));nozzle.position.set(s.x1+(s.x2-s.x1)*f-cx,s.z-mnz,-(s.y1+(s.y2-s.y1)*f-cy))}else if(totalSegs){const s=segs[totalSegs-1];nozzle.position.set(s.x2-cx,s.z-mnz,-(s.y2-cy))}
+      const rem=Math.max(0,Math.round((G.T-tm)/60));gl.textContent=a("layer")+" "+(full?segs[full-1].layer+1:1)+" / "+(G.totalLayers||G.layers.length)+" · "+a("left")+" "+(rem?fmt(rem):"<1 "+(lang==="ru"?"мин":"хв"));gp.textContent=play?"❚❚":"▶";gs.value=G.T?Math.round(tm/G.T*1000):0;
+    }
+    gp.onclick=()=>{live=false;if(!play&&tm>=G.T)tm=0;play=!play;dirty=true};gs.oninput=()=>{live=false;play=false;tm=gs.value/1000*G.T;dirty=true};if(gl2)gl2.onclick=()=>{live=true;play=false;dirty=true};
+    let last=performance.now();(function loop(now){if(!host.isConnected){r.dispose();geo.dispose();mat.dispose();return}const dt=(now-last)/1000;last=now;if(live){tm=Math.min(G.T,(Date.now()-o.started)/1000);dirty=true}else if(play){tm+=dt*G.T/28;if(tm>=G.T){tm=G.T;play=false}dirty=true}if(dirty){update();dirty=false}ct.update();r.render(scene,cam);requestAnimationFrame(loop)})(last);
+  }catch(e){console.error("G-code 3D",e);box.innerHTML='<p class="mut">'+a("err")+'</p>'}
+}function openOrder(id){
   const o=ORD[id];if(!o)return;
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
   modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
@@ -458,8 +435,8 @@ async function show3d(box,url,fb){
     const dpr=Math.min(devicePixelRatio||1,1.5);
     const r=new T.WebGLRenderer({antialias:dpr<1.5,alpha:true,powerPreference:"high-performance"});r.setPixelRatio(dpr);
     const w=box.clientWidth,h=box.clientHeight;r.setSize(w,h);box.innerHTML="";box.appendChild(r.domElement);
-    const cam=new T.PerspectiveCamera(40,w/h,sz/100,sz*20);cam.position.set(sz*.8,sz*.6,sz*1.1);
-    const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.enablePan=false;ct.autoRotate=true;ct.autoRotateSpeed=2.5;
+    const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,sz/1000),sz*20);cam.position.set(sz*.62,sz*.5,sz*.78);
+    const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.enableZoom=true;ct.minDistance=sz*.18;ct.maxDistance=sz*4;ct.autoRotate=true;ct.autoRotateSpeed=1.5;
     let need=true;ct.addEventListener("change",()=>need=true);ct.addEventListener("start",()=>{ct.autoRotate=false});
     setTimeout(()=>{ct.autoRotate=false},8000);
     (function loop(){
