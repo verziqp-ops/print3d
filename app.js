@@ -45,7 +45,7 @@ css.textContent=`
 body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.58);--line:rgba(255,255,255,.1);--field:rgba(255,255,255,.07);--accent:#ff8a1f;display:block;padding:0;background:#080605;color:var(--text)}
 .app-on .blob,.bg-ready .blob{display:none}.app-on .wrap{max-width:1200px!important;margin:0 auto!important;padding:0 16px}
 body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.78);--line:rgba(255,255,255,.1);--field:#19120d;--accent:#ff8a1f;background:#080605}
-#bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#050505}
+#bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#000}
 .bg-parallax{position:absolute;inset:-3%;transform:translate3d(var(--bg-x,0px),var(--bg-y,0px),0);transition:transform 1.4s cubic-bezier(.2,.65,.3,1);will-change:transform}
 .bg-art{position:absolute;inset:-2%;animation:matteDrift 14s ease-in-out infinite alternate;will-change:transform}
 #bubbles::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.22) 100%)}
