@@ -47,12 +47,14 @@ body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgb
 body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.78);--line:rgba(255,255,255,.1);--field:#19120d;--accent:#ff8a1f;background:#080605}
 #bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#050505}
 .bg-parallax{position:absolute;inset:-3%;transform:translate3d(var(--bg-x,0px),var(--bg-y,0px),0);transition:transform 1.4s cubic-bezier(.2,.65,.3,1);will-change:transform}
-.bg-art{position:absolute;inset:-2%;background:url("assets/matte-background.webp?v=20261003-matte16") center/cover no-repeat;animation:matteDrift 38s ease-in-out infinite alternate;will-change:transform}
+.bg-art{position:absolute;inset:-2%;animation:matteDrift 14s ease-in-out infinite alternate;will-change:transform}
 #bubbles::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.22) 100%)}
-@keyframes matteDrift{0%{transform:translate3d(-.5%,-.5%,0) scale(1.01) rotate(-.35deg)}50%{transform:translate3d(.6%,.3%,0) scale(1.025) rotate(.1deg)}100%{transform:translate3d(-.2%,.8%,0) scale(1.04) rotate(.4deg)}}
-#bubbles.bg-paused .bg-art{animation-play-state:paused}
+@keyframes matteDrift{0%{transform:translate3d(-1%,-.7%,0) scale(1.015) rotate(-.35deg)}50%{transform:translate3d(1.2%,.8%,0) scale(1.03) rotate(.1deg)}100%{transform:translate3d(-.8%,1.1%,0) scale(1.02) rotate(.4deg)}}
+.bg-art svg{display:block;width:100%;height:100%}.matte-piece{animation:matteFloat var(--float-time,9s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s);will-change:transform}
+@keyframes matteFloat{from{transform:translate(var(--float-x,-12px),-15px)}to{transform:translate(calc(var(--float-x,-12px) * -1),18px)}}
+#bubbles.bg-paused .bg-art,#bubbles.bg-paused .matte-piece{animation-play-state:paused}
 @media(max-width:760px){.bg-art{background-position:48% center}.bg-parallax{transition-duration:1.8s}}
-@media(prefers-reduced-motion:reduce){.bg-art{animation:none;will-change:auto}.bg-parallax{transform:none;transition:none;will-change:auto}}
+@media(prefers-reduced-motion:reduce){.bg-art,.matte-piece{animation:none;will-change:auto}.bg-parallax{transform:none;transition:none;will-change:auto}}
 @keyframes fl{to{transform:translateY(-14px)}}
 .glass,.card2{background:var(--card);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
@@ -770,7 +772,12 @@ async function onChange(e){
 
 function initBackground(){
  if(bub)return;document.body.classList.add('bg-ready');
- bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');bub.innerHTML='<div class="bg-parallax"><div class="bg-art"></div></div>';document.body.appendChild(bub);
+ bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');const pieces=[[615,231,64,68],[529,369,49,48],[838,121,36,36],[803,423,218,158],[1168,485,116,150],[1457,348,42,43],[857,868,45,45],[1608,436,67,71]];
+ const asset='assets/matte-background-hq.webp?v=20261003-alive18';
+ const defs=pieces.map(([x,y,rx,ry],i)=>`<clipPath id="matte-clip-${i}"><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/></clipPath>`).join('');
+ const holes=pieces.map(([x,y,rx,ry])=>`<ellipse cx="${x}" cy="${y}" rx="${rx+4}" ry="${ry+4}" fill="black"/>`).join('');
+ const floats=pieces.map((_,i)=>`<g class="matte-piece" style="--float-time:${7+i%4*1.5}s;--float-delay:-${i*1.7}s;--float-x:${i%2?10:-12}px"><g clip-path="url(#matte-clip-${i})"><image href="${asset}" width="1672" height="941"/></g></g>`).join('');
+ bub.innerHTML=`<div class="bg-parallax"><div class="bg-art"><svg viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>${defs}<mask id="matte-base" maskUnits="userSpaceOnUse" x="0" y="0" width="1672" height="941"><rect width="1672" height="941" fill="white"/>${holes}</mask></defs><image href="${asset}" width="1672" height="941" mask="url(#matte-base)"/>${floats}</svg></div></div>`;document.body.appendChild(bub);
  const motion=matchMedia('(prefers-reduced-motion:reduce)'),fine=matchMedia('(hover:hover) and (pointer:fine)');let frame=0,x=0,y=0;
  const paint=()=>{frame=0;bub.style.setProperty('--bg-x',x+'px');bub.style.setProperty('--bg-y',y+'px')};
  const queue=()=>{if(!frame)frame=requestAnimationFrame(paint)};
