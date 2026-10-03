@@ -116,7 +116,7 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .media{position:relative}.mw{position:relative}.mt{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;z-index:2}.mt .chip{padding:6px 14px;font-size:13px;backdrop-filter:blur(8px)}
 .e3{position:absolute;top:10px;left:12px;font-size:12px;color:var(--muted)}
 .gv canvas{width:100%;aspect-ratio:1/1;border-radius:18px;background:radial-gradient(circle at 50% 30%,#1c130b,#070504);display:block}
-.gc{display:flex;gap:8px;align-items:center;margin-top:10px}.gc input[type=range]{flex:1;accent-color:#ff8a1f}
+.gc{display:flex;gap:8px;align-items:center;margin-top:10px}.gc input[type=range]{flex:1;min-width:0;accent-color:#ff8a1f}.gc .chip{white-space:nowrap}
 .gl{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
 .chat{display:flex;flex-direction:column;height:min(620px,calc(100vh - 190px));max-width:720px;margin:0 auto;padding:14px}
 #msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px}
@@ -322,87 +322,127 @@ function openProduct(id){
 }
 const ORD={};
 function parseG(txt){
-  const lines=txt.split(/\r?\n/),layers=[];
-  let x=0,y=0,z=0,e=0,f=1500,rx=false,re=false,t=0,cz=null,cur=null;
-  let modelTime=null,totalTime=null,totalLayers=null,maxZ=null;
-  const parseDuration=s=>{
-    const m=String(s).match(/(?:(\d+)\s*d(?:ays?)?\s*)?(?:(\d+)\s*h(?:ours?)?\s*)?(?:(\d+)\s*m(?:in(?:utes?)?)?\s*)?(?:(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?)/i);
-    if(!m)return null;
-    return (+m[1]||0)*86400+(+m[2]||0)*3600+(+m[3]||0)*60+(+m[4]||0);
-  };
-  for(let i=0;i<lines.length;i++){
-    let raw=lines[i],ln=raw.trim();
-    if(ln.startsWith(";")){
-      let m=ln.match(/model printing time\s*[:=]\s*(.*?)(?:;|$)/i);
-      if(m){const v=parseDuration(m[1]);if(v!=null)modelTime=v}
-      m=ln.match(/total estimated time\s*[:=]\s*(.*?)(?:;|$)/i);
-      if(m){const v=parseDuration(m[1]);if(v!=null)totalTime=v}
-      m=ln.match(/total layer number\s*[:=]\s*(\d+)/i);if(m)totalLayers=+m[1];
-      m=ln.match(/max_z_height\s*[:=]\s*([\d.]+)/i);if(m)maxZ=+m[1];
-      continue;
+  const layers=[],byZ=new Map();
+  let x=0,y=0,z=0,e=0,f=1500,relative=false,relativeE=false,unit=1,t=0;
+  let modelTime=null,totalTime=null,totalLayers=null,maxZ=null,width=.45,height=.2,role='',inModel=!/;\s*(?:CHANGE_LAYER|LAYER_CHANGE|LAYER\s*:)/i.test(txt),layerHeightKnown=false;
+  const duration=s=>{let sum=0,found=false;for(const m of s.matchAll(/(\d+(?:\.\d+)?)\s*(d(?:ays?)?|h(?:ours?)?|m(?:in(?:utes?)?)?|s(?:ec(?:onds?)?)?)/gi)){found=true;sum+=+m[1]*({d:86400,h:3600,m:60,s:1}[m[2][0].toLowerCase()])}return found?sum:null};
+  function add(ax,ay,bx,by,az,bz,amount,time){
+    const len=Math.hypot(bx-ax,by-ay);if(len<1e-7||amount<=0||!inModel||/custom|wipe|prime tower/i.test(role))return;
+    const key=Math.round(bz*10000);let L=byZ.get(key);
+    if(!L){L={z:bz,h:height,s:[],w:[],t:[],t0:t-time};byZ.set(key,L);layers.push(L)}
+    // Slicers annotate width/height. Otherwise derive deposited volume from 1.75 mm filament.
+    const w=width||Math.max(.15,Math.min(1.5,amount*Math.PI*.875*.875/(len*height)+(1-Math.PI/4)*height));
+    L.s.push(ax,ay,az,bx,by,bz);L.w.push(w);L.t.push(t);
+  }
+  for(const raw of txt.split(/\r?\n/)){
+    const comment=raw.slice(raw.indexOf(';')+1);
+    if(raw.includes(';')){
+      let m=comment.match(/model printing time\s*[:=]\s*([^;]+)/i);if(m)modelTime=duration(m[1]);
+      m=comment.match(/total estimated time\s*[:=]\s*([^;]+)/i);if(m)totalTime=duration(m[1]);
+      m=comment.match(/total layer number\s*[:=]\s*(\d+)/i);if(m)totalLayers=+m[1];
+      m=comment.match(/max_z_height\s*[:=]\s*([\d.]+)/i);if(m)maxZ=+m[1];
+      if(/^(?:\s*)(?:CHANGE_LAYER|LAYER_CHANGE|LAYER\s*:)/i.test(comment))inModel=true;
+      m=comment.match(/(?:LINE_WIDTH|WIDTH)\s*[:=]\s*([\d.]+)/i);if(m)width=+m[1];
+      m=comment.match(/(?:LAYER_HEIGHT|HEIGHT)\s*[:=]\s*([\d.]+)/i);if(m&&+m[1]>0){height=+m[1];layerHeightKnown=true}
+      m=comment.match(/(?:FEATURE|TYPE)\s*:\s*(.*)/i);if(m)role=m[1].trim();
     }
-    const c=ln.indexOf(";");if(c>=0)ln=ln.slice(0,c);
-    ln=ln.trim();if(!ln)continue;
-    const w=ln.split(/\s+/),cmd=w[0].toUpperCase();
-    if(cmd==="G90"){rx=false;continue} if(cmd==="G91"){rx=true;continue}
-    if(cmd==="M82"){re=false;continue} if(cmd==="M83"){re=true;continue}
-    if(cmd==="G92"){for(let k=1;k<w.length;k++)if(w[k][0]?.toUpperCase()==="E")e=parseFloat(w[k].slice(1))||0;continue}
-    if(cmd!=="G0"&&cmd!=="G1")continue;
-    let nx=x,ny=y,nz=z,ne=e,eIn=0;
-    for(let k=1;k<w.length;k++){
-      const v=parseFloat(w[k].slice(1));if(isNaN(v))continue;
-      const q=w[k][0].toUpperCase();
-      switch(q){case"X":nx=rx?x+v:v;break;case"Y":ny=rx?y+v:v;break;case"Z":nz=rx?z+v:v;break;case"E":eIn=re?v:v-e;ne=re?e+v:v;break;case"F":f=v||f;break}
+    const line=raw.split(';')[0].replace(/\([^)]*\)/g,'').replace(/\*\d+\s*$/,'').trim();
+    const match=line.match(/^(?:N\d+\s*)?([GMT])0*(\d+(?:\.\d+)?)/i);if(!match)continue;
+    const cmd=match[1].toUpperCase()+Number(match[2]),p={};
+    for(const m of line.slice(match[0].length).matchAll(/([A-Z])\s*([-+]?(?:\d*\.\d+|\d+\.?\d*))/gi))p[m[1].toUpperCase()]=+m[2];
+    if(cmd==='G20'){unit=25.4;continue}if(cmd==='G21'){unit=1;continue}
+    if(cmd==='G90'){relative=false;relativeE=false;continue}if(cmd==='G91'){relative=true;relativeE=true;continue}
+    if(cmd==='M82'){relativeE=false;continue}if(cmd==='M83'){relativeE=true;continue}
+    if(cmd==='G92'){if(p.X!==undefined)x=p.X*unit;if(p.Y!==undefined)y=p.Y*unit;if(p.Z!==undefined)z=p.Z*unit;if(p.E!==undefined)e=p.E*unit;continue}
+    if(!['G0','G1','G2','G3'].includes(cmd))continue;
+    const nx=p.X===undefined?x:p.X*unit+(relative?x:0),ny=p.Y===undefined?y:p.Y*unit+(relative?y:0),nz=p.Z===undefined?z:p.Z*unit+(relative?z:0);
+    const ne=p.E===undefined?e:p.E*unit+(relativeE?e:0),amount=ne-e;if(p.F>0)f=p.F*unit;
+    let points=[[nx,ny,nz]];
+    if(cmd==='G2'||cmd==='G3'){
+      let cx,cy;const cw=cmd==='G2',tau=2*Math.PI;
+      const sweep=(a,b)=>{let d=b-a;if(cw){while(d>=-1e-9)d-=tau}else{while(d<=1e-9)d+=tau}return d};
+      if(p.I!==undefined||p.J!==undefined){cx=x+(p.I||0)*unit;cy=y+(p.J||0)*unit}
+      else if(p.R!==undefined){
+        const dx=nx-x,dy=ny-y,chord=Math.hypot(dx,dy),radius=Math.abs(p.R*unit);
+        if(chord>1e-8&&chord<=2*radius+1e-5){
+          const off=Math.sqrt(Math.max(0,radius*radius-chord*chord/4));
+          for(const sign of [1,-1]){const a=(x+nx)/2-sign*dy/chord*off,b=(y+ny)/2+sign*dx/chord*off,d=sweep(Math.atan2(y-b,x-a),Math.atan2(ny-b,nx-a));if((p.R>=0&&Math.abs(d)<=Math.PI+1e-7)||(p.R<0&&Math.abs(d)>=Math.PI-1e-7)){cx=a;cy=b;break}}
+        }
+      }
+      if(cx!==undefined){const radius=Math.hypot(x-cx,y-cy),start=Math.atan2(y-cy,x-cx),delta=sweep(start,Math.atan2(ny-cy,nx-cx));
+        // At most 0.02 mm chord error; never drop short curved moves.
+        const step=2*Math.acos(Math.max(-1,Math.min(1,1-.02/Math.max(radius,.02)))),count=Math.max(1,Math.min(8192,Math.ceil(Math.abs(delta)/Math.min(.15,step||.15))));
+        points=[];for(let i=1;i<=count;i++){const u=i/count,a=start+delta*u;points.push(i===count?[nx,ny,nz]:[cx+radius*Math.cos(a),cy+radius*Math.sin(a),z+(nz-z)*u])}
+      }
     }
-    const dx=nx-x,dy=ny-y,dz=nz-z,d=Math.hypot(dx,dy,dz),dt=d/(Math.max(1,f)/60),t0=t;t+=dt;
-    if(eIn>0&&(dx||dy||dz)){
-      if(cz===null||Math.abs(nz-cz)>1e-4){cz=nz;cur={z:nz,s:[],t:[],t0:t-dt};layers.push(cur)}
-      cur.s.push(x,y,nx,ny);cur.t.push(t);
-    }
+    let px=x,py=y,pz=z;for(const [qx,qy,qz] of points){const dt=Math.hypot(qx-px,qy-py,qz-pz)/(Math.max(1,f)/60);t+=dt;add(px,py,qx,qy,pz,qz,amount/points.length,dt);px=qx;py=qy;pz=qz}
     x=nx;y=ny;z=nz;e=ne;
   }
-  const rawPathTime=t,target=modelTime||totalTime||rawPathTime,k=target&&rawPathTime?target/rawPathTime:1;
-  for(const L of layers){L.s=Float32Array.from(L.s);L.t=Float32Array.from(L.t,v=>v*k);L.t0*=k;L.t1=L.t.length?L.t[L.t.length-1]:L.t0}
-  return {layers,T:target||rawPathTime,modelTime,totalTime,totalLayers,maxZ};
+  const target=modelTime||totalTime||t,k=t?target/t:1;
+  layers.sort((a,b)=>a.z-b.z);
+  layers.forEach((L,i)=>{if(!layerHeightKnown)L.h=Math.max(.04,Math.min(.6,i?L.z-layers[i-1].z:L.z||.2));L.s=Float32Array.from(L.s);L.w=Float32Array.from(L.w);L.t=Float32Array.from(L.t,v=>v*k);L.t0*=k;L.t1=L.t.length?L.t[L.t.length-1]:L.t0});
+  return {layers,T:target,modelTime,totalTime,totalLayers,maxZ};
+}
+function gLayerGeometry(T,L,cx,cy,base){
+  const count=L.s.length/6,positions=new Float32Array(count*36),normals=new Float32Array(count*36),indices=new Uint32Array(count*60);
+  // A flattened six-sided bead: broad top/bottom, rounded-looking filament shoulders.
+  const ring=[[-.32,.5],[.32,.5],[.5,0],[.32,-.5],[-.32,-.5],[-.5,0]];
+  for(let j=0;j<count;j++){
+    const s=j*6,dx=L.s[s+3]-L.s[s],dy=-(L.s[s+4]-L.s[s+1]),len=Math.hypot(dx,dy),ux=-dy/len,uz=dx/len,w=L.w[j],h=L.h;
+    for(let end=0;end<2;end++)for(let q=0;q<6;q++){
+      const v=j*36+end*18+q*3,[side,up]=ring[q],offset=side*w;
+      positions[v]=L.s[s+end*3]-cx+ux*offset;positions[v+1]=L.s[s+end*3+2]-base-h/2+up*h;positions[v+2]=-(L.s[s+end*3+1]-cy)+uz*offset;
+      const n=Math.hypot(side,up);normals[v]=ux*side/n;normals[v+1]=up/n;normals[v+2]=uz*side/n;
+    }
+    let k=j*60,b=j*12;for(let q=0;q<6;q++){const n=(q+1)%6;indices.set([b+q,b+n,b+6+q,b+n,b+6+n,b+6+q],k);k+=6}
+    for(let q=1;q<5;q++){indices.set([b,b+q+1,b+q,b+6,b+6+q,b+6+q+1],k);k+=6}
+  }
+  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setAttribute('normal',new T.BufferAttribute(normals,3));geo.setIndex(new T.BufferAttribute(indices,1));return geo;
 }
 async function gview(box,url,o){
   box.innerHTML='<p class="mut">…</p>';let G;
-  try{const r=await fetch(url);if(!r.ok)throw 0;G=parseG(await r.text())}catch(e){console.error("G-code",e);box.innerHTML='<p class="mut">'+a("err")+'</p>';return}
-  if(!box.isConnected||!G.layers.length){box.innerHTML='<p class="mut">'+a("err")+'</p>';return}
+  try{const response=await fetch(url);if(!response.ok)throw Error('G-code download');G=parseG(await response.text())}catch(e){console.error('G-code',e);box.innerHTML='<p class="mut">'+a('err')+'</p>';return}
+  if(!box.isConnected)return;if(!G.layers.length){box.innerHTML='<p class="mut">'+a('err')+'</p>';return}
   try{
-    const {T,OrbitControls}=await load3();
-    let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9,mnz=1e9,mxz=-1e9;
-    const segs=[];
-    G.layers.forEach((L,layer)=>{
-      mnz=Math.min(mnz,L.z);mxz=Math.max(mxz,L.z);
-      for(let i=0;i<L.s.length;i+=4){const j=i/4,x1=L.s[i],y1=L.s[i+1],x2=L.s[i+2],y2=L.s[i+3];mnx=Math.min(mnx,x1,x2);mxx=Math.max(mxx,x1,x2);mny=Math.min(mny,y1,y2);mxy=Math.max(mxy,y1,y2);segs.push({x1,y1,x2,y2,z:L.z,t1:L.t[j]||L.t0,t0:j?L.t[j-1]:L.t0,layer})}
-    });
-    const cx=(mnx+mxx)/2,cy=(mny+mxy)/2,span=Math.max(mxx-mnx,mxy-mny,mxz-mnz,1),scene=new T.Scene();
-    const pos=new Float32Array(segs.length*6),colors=new Float32Array(segs.length*6),color=new T.Color();
-    for(let i=0;i<segs.length;i++){const s=segs[i],p=i*6;pos[p]=s.x1-cx;pos[p+1]=s.z-mnz;pos[p+2]=-(s.y1-cy);pos[p+3]=s.x2-cx;pos[p+4]=s.z-mnz;pos[p+5]=-(s.y2-cy);color.setHSL(.07,.95,.34+.38*(s.z-mnz)/Math.max(1,mxz-mnz));for(let q=0;q<2;q++){colors[p+q*3]=color.r;colors[p+q*3+1]=color.g;colors[p+q*3+2]=color.b}}
-    const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(pos,3));geo.setAttribute("color",new T.BufferAttribute(colors,3));
-    const mat=new T.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.9});const path=new T.LineSegments(geo,mat);scene.add(path);
-    const plateSize=Math.max(span*1.18,20),pg=new T.PlaneGeometry(plateSize,plateSize),pm=new T.MeshBasicMaterial({color:0x24170e,transparent:true,opacity:.55,side:T.DoubleSide});
-    const plate=new T.Mesh(pg,pm);plate.rotation.x=-Math.PI/2;plate.position.y=-.18;scene.add(plate);
-    const grid=new T.GridHelper(plateSize,Math.max(10,Math.min(40,Math.round(plateSize/5))),0x7a4a27,0x3b2a1c);grid.position.y=-.16;scene.add(grid);
-    const nozzle=new T.Mesh(new T.ConeGeometry(Math.max(span*.012,.7),Math.max(span*.055,2.2),12),new T.MeshStandardMaterial({color:0xff8a1f,metalness:.2,roughness:.35,emissive:0x3a1600,emissiveIntensity:.45}));scene.add(nozzle);
-    scene.add(new T.HemisphereLight(0xffead6,0x120b06,1.9));const dl=new T.DirectionalLight(0xffffff,1.7);dl.position.set(span,span*1.5,span);scene.add(dl);
-    box.innerHTML='<div class="g3box"></div><div class="gc"><button class="ib" id="gp">▶</button><input type="range" id="gs" min="0" max="1000" value="1000">'+(o.started?'<button class="chip" id="gl2">'+a("live")+'</button>':'')+'</div><div class="gl" id="gl"></div>';
-    const host=box.querySelector(".g3box");host.style.cssText="width:100%;height:min(58vh,520px);min-height:330px;border-radius:20px;overflow:hidden;cursor:grab;";
-    const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight),r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance"});r.setPixelRatio(Math.min(devicePixelRatio||1,1.5));r.setSize(w,h);host.appendChild(r.domElement);
-    const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,span/1000),span*20);cam.position.set(span*.72,span*.68,span*.88);
-    const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.minDistance=span*.25;ct.maxDistance=span*4;ct.autoRotate=true;ct.autoRotateSpeed=1.2;ct.target.set(0,span*.18,0);ct.addEventListener("start",()=>{ct.autoRotate=false});
-    let play=false,live=!!(o.started&&o.status==="printing"),tm=live?Math.min(G.T,(Date.now()-o.started)/1000):G.T,dirty=true;
-    const gp=box.querySelector("#gp"),gs=box.querySelector("#gs"),gl=box.querySelector("#gl"),gl2=box.querySelector("#gl2"),totalSegs=segs.length;
+    const {T,OrbitControls}=await load3();if(!box.isConnected)return;
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for(const L of G.layers)for(let i=0;i<L.s.length;i+=3){minX=Math.min(minX,L.s[i]);maxX=Math.max(maxX,L.s[i]);minY=Math.min(minY,L.s[i+1]);maxY=Math.max(maxY,L.s[i+1])}
+    const cx=(minX+maxX)/2,cy=(minY+maxY)/2,base=G.layers[0].z-G.layers[0].h,modelHeight=G.layers.at(-1).z-base,span=Math.max(maxX-minX,maxY-minY,modelHeight,1);
+    const scene=new T.Scene();scene.background=new T.Color(0x111317);
+    const normal=new T.MeshStandardMaterial({color:0xf39a36,roughness:.68,metalness:0,side:T.DoubleSide}),active=new T.MeshStandardMaterial({color:0xffd06a,roughness:.65,side:T.DoubleSide});
+    const meshes=[];
+    // Yield between batches so large files do not freeze touch/scroll controls.
+    for(let i=0;i<G.layers.length;i++){const mesh=new T.Mesh(gLayerGeometry(T,G.layers[i],cx,cy,base),normal);scene.add(mesh);meshes.push(mesh);if(i%16===15){await new Promise(resolve=>setTimeout(resolve,0));if(!box.isConnected){meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();return}}}
+    scene.add(new T.HemisphereLight(0xffffff,0x4c5263,2.4));const light=new T.DirectionalLight(0xffffff,2.8);light.position.set(span,span*2,span);scene.add(light);
+    const plateSize=Math.max(maxX-minX,maxY-minY,10)*1.25,plateGeo=new T.PlaneGeometry(plateSize,plateSize),plateMat=new T.MeshStandardMaterial({color:0x23272d,roughness:1,side:T.DoubleSide}),plate=new T.Mesh(plateGeo,plateMat);plate.rotation.x=-Math.PI/2;plate.position.y=-.06;scene.add(plate);
+    const grid=new T.GridHelper(plateSize,20,0x555c65,0x343a42);grid.position.y=-.04;scene.add(grid);
+    const n=meshes.length;
+    box.innerHTML='<div class="g3box"></div><div class="gc"><button class="ib" id="gp" aria-label="Play">▶</button><input type="range" id="gs" aria-label="'+a('layer')+'" min="1" max="'+n+'" value="'+n+'">'+(o.started?'<button class="chip" id="gl2">'+a('live')+'</button>':'')+'<button class="chip" id="gf">'+(lang==='ru'?'Весь объект':'Вся модель')+'</button></div><div class="gl" id="gl"></div>';
+    const host=box.querySelector('.g3box');host.style.cssText='width:100%;height:min(58vh,520px);min-height:330px;border-radius:20px;overflow:hidden;cursor:grab;';
+    const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));host.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';
+    const camera=new T.PerspectiveCamera(42,1,Math.max(.01,span/10000),span*50),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.enablePan=true;controls.minDistance=span*.1;controls.maxDistance=span*10;
+    const center=new T.Vector3(0,modelHeight/2,0),direction=new T.Vector3(1,.8,1.3).normalize();
+    function fit(){const aspect=Math.max(.1,host.clientWidth/host.clientHeight),vf=camera.fov*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*aspect),radius=Math.hypot(maxX-minX,maxY-minY,modelHeight)/2+.5,distance=radius/Math.sin(Math.min(vf,hf)/2)*1.12;controls.target.copy(center);camera.position.copy(center).addScaledVector(direction,distance);controls.update()}
+    function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
+    resize();fit();const observer=new ResizeObserver(resize);observer.observe(host);
+    const gp=box.querySelector('#gp'),slider=box.querySelector('#gs'),label=box.querySelector('#gl'),liveButton=box.querySelector('#gl2');
+    let selected=n,play=false,live=!!(o.started&&o.status==='printing'),elapsed=G.T,dirty=true;
     function update(){
-      let lo=0,hi=totalSegs;while(lo<hi){const m=(lo+hi)>>1;if(segs[m].t1<=tm)lo=m+1;else hi=m}const full=lo;path.geometry.setDrawRange(0,full*2);
-      if(full<totalSegs){const s=segs[full],f=Math.min(1,Math.max(0,(tm-s.t0)/Math.max(.0001,s.t1-s.t0)));nozzle.position.set(s.x1+(s.x2-s.x1)*f-cx,s.z-mnz,-(s.y1+(s.y2-s.y1)*f-cy))}else if(totalSegs){const s=segs[totalSegs-1];nozzle.position.set(s.x2-cx,s.z-mnz,-(s.y2-cy))}
-      const rem=Math.max(0,Math.round((G.T-tm)/60));gl.textContent=a("layer")+" "+(full?segs[full-1].layer+1:1)+" / "+(G.totalLayers||G.layers.length)+" · "+a("left")+" "+(rem?fmt(rem):"<1 "+(lang==="ru"?"мин":"хв"));gp.textContent=play?"❚❚":"▶";gs.value=G.T?Math.round(tm/G.T*1000):0;
+      if(live||play){selected=1;for(let i=0;i<n;i++)if(G.layers[i].t0<=elapsed)selected=i+1}
+      for(let i=0;i<n;i++){const mesh=meshes[i],L=G.layers[i];mesh.visible=i<selected;mesh.material=i===selected-1?active:normal;let count=L.s.length/6;
+        if((play||live)&&mesh.visible){let lo=0,hi=L.t.length;while(lo<hi){const mid=(lo+hi)>>1;if(L.t[mid]<=elapsed)lo=mid+1;else hi=mid}count=lo}mesh.geometry.setDrawRange(0,count*60)}
+      slider.value=selected;gp.textContent=play?'❚❚':'▶';const rem=Math.max(0,Math.ceil((G.T-elapsed)/60));label.textContent=a('layer')+' '+selected+' / '+n+' · '+a('left')+' '+(rem?fmt(rem):'<1 '+(lang==='ru'?'мин':'хв'));
     }
-    gp.onclick=()=>{live=false;if(!play&&tm>=G.T)tm=0;play=!play;dirty=true};gs.oninput=()=>{live=false;play=false;tm=gs.value/1000*G.T;dirty=true};if(gl2)gl2.onclick=()=>{live=true;play=false;dirty=true};
-    let last=performance.now();(function loop(now){if(!host.isConnected){r.dispose();geo.dispose();mat.dispose();return}const dt=(now-last)/1000;last=now;if(live){tm=Math.min(G.T,(Date.now()-o.started)/1000);dirty=true}else if(play){tm+=dt*G.T/28;if(tm>=G.T){tm=G.T;play=false}dirty=true}if(dirty){update();dirty=false}ct.update();r.render(scene,cam);requestAnimationFrame(loop)})(last);
-  }catch(e){console.error("G-code 3D",e);box.innerHTML='<p class="mut">'+a("err")+'</p>'}
-}function openOrder(id){
+    slider.oninput=()=>{selected=+slider.value;live=false;play=false;elapsed=G.layers[selected-1].t1;dirty=true};
+    gp.onclick=()=>{live=false;if(!play&&elapsed>=G.T)elapsed=0;play=!play;dirty=true};
+    if(liveButton)liveButton.onclick=()=>{live=true;play=false;dirty=true};
+    box.querySelector('#gf').onclick=()=>{selected=n;elapsed=G.T;play=live=false;fit();dirty=true};
+    let last=performance.now(),disposed=false;
+    function dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();plateGeo.dispose();plateMat.dispose();grid.geometry.dispose();(Array.isArray(grid.material)?grid.material:[grid.material]).forEach(m=>m.dispose());renderer.dispose()}
+    function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}if(dirty){update();dirty=false}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
+  }catch(e){console.error('G-code 3D',e);if(box.isConnected)box.innerHTML='<p class="mut">'+a('err')+'</p>'}
+}
+function openOrder(id){
   const o=ORD[id];if(!o)return;
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
   modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
