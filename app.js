@@ -553,7 +553,12 @@ function openOrder(id){
 }
 let T3=null;const G3={};
 const load3=()=>T3||(T3=(async()=>{const B="https://cdn.jsdelivr.net/npm/three@0.160.0/";const T=await import(B+"+esm");const {OrbitControls}=await import(B+"examples/jsm/controls/OrbitControls.js/+esm");return {T,OrbitControls,B}})());
-async function show3d(box,url,fb){
+function paintModel(obj,color){
+  obj.traverse(node=>{if(!node.isMesh)return;const materials=Array.isArray(node.material)?node.material:[node.material];
+    materials.forEach(material=>{if(material.color)material.color.set(color);material.vertexColors=false;material.map=null;material.needsUpdate=true})});
+}
+async function show3d(box,url,fb,color){
+  const request=Symbol('model');box.modelRequest=request;box.dataset.modelColor=color||'#ff8a1f';delete box.setModelColor;
   box.innerHTML=`<p class="mut" id="p3">${a("load3d")}</p>`;
   try{
     const {T,OrbitControls,B}=await load3();
@@ -566,7 +571,12 @@ async function show3d(box,url,fb){
       obj.rotation.x=-Math.PI/2;const bb=new T.Box3().setFromObject(obj),c=bb.getCenter(new T.Vector3());
       const grp=new T.Group();obj.position.sub(c);grp.add(obj);grp.userData.size=bb.getSize(new T.Vector3()).length();obj=G3[url]=grp;
     }
-    if(!box.isConnected)return;
+    if(!box.isConnected||box.modelRequest!==request)return;
+    // Keep cached geometry, but give each viewer its own materials and color.
+    obj=obj.clone(true);const ownedMaterials=[];
+    obj.traverse(node=>{if(!node.isMesh)return;const clone=material=>{const copy=material.clone();ownedMaterials.push(copy);return copy};node.material=Array.isArray(node.material)?node.material.map(clone):clone(node.material)});
+    paintModel(obj,box.dataset.modelColor);
+    let need=true;box.setModelColor=color=>{box.dataset.modelColor=color;paintModel(obj,color);need=true};
     const sz=obj.userData.size||100,sc=new T.Scene();sc.add(obj);
     sc.add(new T.HemisphereLight(0xffffff,0x332211,1.6));const dl=new T.DirectionalLight(0xffffff,1.4);dl.position.set(2,3,4);sc.add(dl);
     const dpr=Math.min(devicePixelRatio||1,1.5);
@@ -574,14 +584,14 @@ async function show3d(box,url,fb){
     const w=box.clientWidth,h=box.clientHeight;r.setSize(w,h);box.innerHTML="";box.appendChild(r.domElement);
     const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,sz/1000),sz*20);cam.position.set(sz*.62,sz*.5,sz*.78);
     const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.enableZoom=true;ct.minDistance=sz*.18;ct.maxDistance=sz*4;ct.autoRotate=true;ct.autoRotateSpeed=1.5;
-    let need=true;ct.addEventListener("change",()=>need=true);ct.addEventListener("start",()=>{ct.autoRotate=false});
+    ct.addEventListener("change",()=>need=true);ct.addEventListener("start",()=>{ct.autoRotate=false});
     setTimeout(()=>{ct.autoRotate=false},8000);
     (function loop(){
-      if(!r.domElement.isConnected){sc.remove(obj);r.dispose();return}
+      if(!r.domElement.isConnected){sc.remove(obj);ct.dispose();ownedMaterials.forEach(material=>material.dispose());if(box.modelRequest===request)delete box.setModelColor;r.dispose();return}
       const ch=ct.update();if(ch||need){r.render(sc,cam);need=false}
       requestAnimationFrame(loop);
     })();
-  }catch(e){console.error("3D",e);box.innerHTML=fb||"";box.insertAdjacentHTML("beforeend",`<span class="e3">${a("err3d")}</span>`)}
+  }catch(e){console.error("3D",e);if(!box.isConnected||box.modelRequest!==request)return;box.innerHTML=fb||"";box.insertAdjacentHTML("beforeend",`<span class="e3">${a("err3d")}</span>`)}
 }
 function addToCart(p,pl,co){
   const f=cart.find(x=>x.pid==p.id&&x.plastic==pl&&x.color==co);
@@ -614,7 +624,7 @@ async function onClick(e){
   if(k==="m3d"||k==="mph"){
     const p=D.products.find(x=>x.id==id),box=document.getElementById("media");if(!p||!box)return;
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
-    if(k==="m3d")show3d(box,p.model,photoHTML(p));else box.innerHTML=photoHTML(p);return;
+    if(k==="m3d")show3d(box,p.model,photoHTML(p),msel.color?colHex(msel.color):'#ff8a1f');else{box.modelRequest=null;delete box.setModelColor;box.innerHTML=photoHTML(p)}return;
   }
   if(k==="close")return closeModal();
   if(k==="fav")return toggleFav(+id);
@@ -628,7 +638,7 @@ async function onClick(e){
   if(k==="mpl"||k==="mco"||k==="pl"||k==="co"){
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
     const m=k[0]==="m",o=m?msel:osel;
-    if(k.endsWith("pl")){o.plastic=n;const p=D.plastics.find(x=>x.name===n);const d=document.getElementById(m?"mpd":"pdesc");if(d)d.textContent=p?p.descr||"":""}else o.color=n;
+    if(k.endsWith("pl")){o.plastic=n;const p=D.plastics.find(x=>x.name===n);const d=document.getElementById(m?"mpd":"pdesc");if(d)d.textContent=p?p.descr||"":""}else{o.color=n;if(m){const box=document.getElementById('media');if(box){box.dataset.modelColor=colHex(n);if(box.setModelColor)box.setModelColor(colHex(n))}}}
     return;
   }
   if(k==="addcart"){
