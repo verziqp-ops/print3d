@@ -46,14 +46,8 @@ body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgb
 .app-on .blob,.bg-ready .blob{display:none}.app-on .wrap{max-width:1200px!important;margin:0 auto!important;padding:0 16px}
 body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.78);--line:rgba(255,255,255,.1);--field:#19120d;--accent:#ff8a1f;background:#080605}
 body.bg-ready{position:relative;min-height:100svh}
-#bubbles{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#000}
-.matte-sprite{position:absolute;mix-blend-mode:screen}
-.matte-float{width:100%;height:100%;animation:matteFloat var(--float-time,12s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s);transform:translate3d(0,0,0);will-change:transform}
-.matte-shape{width:100%;height:100%;transform:rotate(var(--shape-angle,0deg));filter:contrast(1.06)}
-.matte-shape svg{display:block;width:100%;height:100%;overflow:visible}
-@keyframes matteFloat{from{transform:translate3d(calc(var(--float-x,8px) * -1),calc(var(--float-y,12px) * -1),0)}to{transform:translate3d(var(--float-x,8px),var(--float-y,12px),0)}}
-#bubbles.bg-paused .matte-float,.matte-sprite.sprite-away .matte-float{animation-play-state:paused}
-@media(prefers-reduced-motion:reduce){.matte-float{animation:none;will-change:auto}}
+#bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#090807}
+#bubbles canvas{display:block;width:100%;height:100%}
 @keyframes fl{to{transform:translateY(-14px)}}
 .glass,.card2{background:var(--card);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
@@ -772,23 +766,9 @@ async function onChange(e){
 
 function initBackground(){
  if(bub)return;document.body.classList.add('bg-ready');
- bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');const asset='assets/matte-background-hq.webp?v=20261003-alive18';
- const visible=new IntersectionObserver(entries=>entries.forEach(e=>e.target.classList.toggle('sprite-away',!e.isIntersecting)),{rootMargin:'100px'});
- const sprites=new Map();let layoutFrame=0;
- const create=n=>{const p=Print3DBackdrop.sources[n.kind],key='shape-'+n.id;
- const region=n.kind===1?'<ellipse cx="1208" cy="402" rx="60" ry="59"/><ellipse cx="1168" cy="516" rx="106" ry="100"/>':`<ellipse cx="${p.x}" cy="${p.y}" rx="${p.rx}" ry="${p.ry}"/>`;
- const node=document.createElement('div');node.className='matte-sprite sprite-away';node.innerHTML=`<div class="matte-float"><div class="matte-shape"><svg viewBox="${p.x-p.rx} ${p.y-p.ry} ${p.rx*2} ${p.ry*2}" aria-hidden="true"><defs><clipPath id="${key}">${region}</clipPath></defs><g clip-path="url(#${key})"><image href="${asset}" width="1672" height="941"/></g></svg></div></div>`;
- if(n.kind<3&&n.id%3!==0){node.querySelector('.matte-shape').innerHTML=`<svg viewBox="0 0 300 300" aria-hidden="true"><defs><radialGradient id="${key}-matte" cx="55%" cy="60%" r="63%"><stop offset="0" stop-color="#742400"/><stop offset=".35" stop-color="#ab3f00"/><stop offset=".72" stop-color="#ef6b00"/><stop offset="1" stop-color="#ffac16"/></radialGradient><linearGradient id="${key}-light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb62d" stop-opacity=".28"/><stop offset=".55" stop-color="#f79e22" stop-opacity="0"/><stop offset="1" stop-color="#281108" stop-opacity=".22"/></linearGradient></defs><path d="${Print3DBackdrop.outline(n.id)}" fill="url(#${key}-matte)"/><path d="${Print3DBackdrop.outline(n.id)}" fill="url(#${key}-light)"/></svg>`;}
- node.style.setProperty('--shape-angle',n.angle+'deg');node.style.setProperty('--float-time',n.duration+'s');node.style.setProperty('--float-delay',n.phase+'s');node.style.setProperty('--float-x',n.dx+'px');node.style.setProperty('--float-y',n.dy+'px');bub.appendChild(node);visible.observe(node);return node};
- document.body.appendChild(bub);
- const fit=()=>{layoutFrame=0;const specs=Print3DBackdrop.layout(bub.clientWidth,bub.clientHeight),ids=new Set(specs.map(n=>n.id));
- for(const [id,node] of sprites)if(!ids.has(id)){visible.unobserve(node);node.remove();sprites.delete(id)}
- for(const n of specs){let node=sprites.get(n.id);if(!node){node=create(n);sprites.set(n.id,node)}Object.assign(node.style,{left:n.x+'px',top:n.y+'px',width:n.w+'px',height:n.h+'px'})}};
- const queueFit=()=>{if(!layoutFrame)layoutFrame=requestAnimationFrame(fit)};
- const observer=new ResizeObserver(queueFit);observer.observe(document.body);observer.observe(bub);window.addEventListener('resize',queueFit,{passive:true});fit();
- const visibility=()=>bub.classList.toggle('bg-paused',document.hidden);document.addEventListener('visibilitychange',visibility);visibility();
- window.addEventListener('pagehide',e=>{if(!e.persisted){observer.disconnect();visible.disconnect();cancelAnimationFrame(layoutFrame);window.removeEventListener('resize',queueFit);document.removeEventListener('visibilitychange',visibility)}});
-
+ bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');document.body.appendChild(bub);
+ const dispose=Print3DLava.mount(bub);
+ window.addEventListener('pagehide',e=>{if(!e.persisted)dispose()});
 }
 window.openApp=async()=>{
   CARDS.forEach(x=>$(x).classList.add("hide"));
