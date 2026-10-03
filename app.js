@@ -182,4 +182,131 @@ async function admin(){
     return h+`<select data-c="cl"><option value="">${a("client")}: ${a("all")}</option>${Object.entries(names).map(([i,n])=>`<option value="${i}" ${i===f?"selected":""}>${esc(n)}</option>`).join("")}</select>`+
       ((o.data||[]).filter(x=>!f||x.user_id===f).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
-  if(asub==="prods")return h+`<div class="card2"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(EP().title)}"></label><label class="f"><span>${a("descr")}</span><textarea id="n2">${esc(EP
+  if(asub==="prods")return h+`<div class="card2"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(EP().title)}"></label><label class="f"><span>${a("descr")}</span><textarea id="n2">${esc(EP().descr)}</textarea></label><div class="rw"><input type="text" id="n4" inputmode="decimal" placeholder="${a("price")}" value="${EP().price??""}"><input type="text" id="n5" inputmode="numeric" placeholder="${a("mins")}" value="${EP().print_minutes??""}"><input type="text" id="n6" inputmode="decimal" placeholder="${a("grams")}" value="${EP().grams??""}"></div>${fp("n3",a("photo"),"image/*")}<button class="btn" data-a="addp">${sel.editId?a("save"):a("add")}</button>${sel.editId?`<p class="center"><button class="link" data-a="cancelp">${a("cancel")}</button></p>`:""}</div>`+
+    D.products.map(p=>`<div class="card2 rw"><b style="flex:1">${esc(p.title)}<br><span class="mut">${esc(pinfo(p))}</span></b><button class="link" data-a="editp" data-id="${p.id}">${a("edit")}</button><button class="link" data-a="delp" data-id="${p.id}">${a("del")}</button></div>`).join("");
+  if(asub==="colors")return h+`<div class="card2"><div class="rw"><input type="text" id="n1" placeholder="${a("title")}"><input type="color" id="n2" value="#e86a0c" style="width:70px"></div><button class="btn" data-a="addc">${a("add")}</button></div>`+
+    D.colors.map(c=>`<div class="card2 rw"><i class="chip" style="padding:0;width:22px;height:22px;background:${esc(c.hex)}"></i><b style="flex:1">${esc(c.name)}</b><button class="chip ${c.in_stock?"on":""}" data-a="stock" data-id="${c.id}">${a("stock")}</button><button class="link" data-a="delc" data-id="${c.id}">${a("del")}</button></div>`).join("");
+  return h+`<div class="card2"><label class="f"><span>${a("title")}</span><input type="text" id="n1" placeholder="PLA"></label><label class="f"><span>${a("descr")}</span><textarea id="n2"></textarea></label><button class="btn" data-a="addpl">${a("add")}</button></div>`+
+    D.plastics.map(x=>`<div class="card2"><div class="rw"><b style="flex:1">${esc(x.name)}</b><button class="link" data-a="delpl" data-id="${x.id}">${a("del")}</button></div><p class="mut">${esc(x.descr)}</p></div>`).join("");
+}
+
+async function render(){
+  const items=[["cat",a("cat")],["chat",a("chat")],["prof",a("prof")]];if(me.is_admin)items.push(["adm",a("adm")]);
+  nav.innerHTML=items.map(([k,t])=>`<button data-a="tab" data-n="${k}" class="${k===tab||((tab==="order"||tab==="cart")&&k==="cat")?"on":""}">${ic(k)}${t}</button>`).join("");
+  let h="";
+  try{
+    if(tab==="cat")h=catalog();
+    else if(tab==="cart")h=cartView();
+    else if(tab==="order")h=orderForm(D.products.find(p=>p.id==sel.open));
+    else if(tab==="chat")h=`<div class="card2"><p class="mut">${a("soon")}</p></div>`;
+    else if(tab==="prof")h=await profile();
+    else h=await admin();
+  }catch(e){h=`<p class="err">${a("err")}</p>`}
+  view.innerHTML=h;
+  if(fab){const on=tab==="cat"&&!root.classList.contains("hide");fab.style.display=on?"grid":"none";prop.style.display=on?"flex":"none";prop.querySelector("span").textContent=a("propose");saveCart()}
+  const th=localStorage.getItem("theme")||"";const s=view.querySelector('[data-c=th]');if(s)s.value=th;
+}
+const go=async(t)=>{tab=t;await render();scrollTo(0,0)};
+const refresh=async()=>{await load();await render()};
+const val=id=>(document.getElementById(id)||{}).value||"";
+const num=id=>{const v=parseFloat(val(id).replace(",","."));return isNaN(v)?null:v};
+const fil=id=>{const f=document.getElementById(id);return f&&f.files[0]};
+const run=async fn=>{try{await fn()}catch(e){console.error(e);alert(a("err"))}};
+
+async function onClick(e){
+  const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.type==="file")return;
+  const k=b.dataset.a,id=b.dataset.id,n=b.dataset.n;
+  if(k==="tab")return go(n);
+  if(k==="sub"){sub=n;return render()}
+  if(k==="asub"){asub=n;return render()}
+  if(k==="new"){closeModal();sel.open=id;tab="order";return render()}
+  if(k==="editp"){sel.editId=id;await render();scrollTo(0,0);return}
+  if(k==="cancelp"){sel.editId=null;return render()}
+  if(k==="open")return openProduct(id);
+  if(k==="close")return closeModal();
+  if(k==="mpl"||k==="mco"){
+    b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
+    if(k==="mpl"){msel.plastic=n;const p=D.plastics.find(x=>x.name===n);document.getElementById("mpd").textContent=p?p.descr||"":""}else msel.color=n;
+    return;
+  }
+  if(k==="addcart"){
+    const p=D.products.find(x=>x.id==id);
+    const f=cart.find(x=>x.pid==p.id&&x.plastic==msel.plastic&&x.color==msel.color);
+    f?f.qty++:cart.push({pid:p.id,title:p.title,price:p.price,image:p.image,plastic:msel.plastic,color:msel.color,qty:1});
+    saveCart();closeModal();
+    fab.animate([{transform:"scale(1)"},{transform:"scale(1.35)"},{transform:"scale(1)"}],{duration:500,easing:"cubic-bezier(.34,1.56,.64,1)"});
+    return;
+  }
+  if(k==="qm"||k==="qp"){
+    const it=cart[+id];if(it){it.qty+=k==="qp"?1:-1;if(it.qty<1)cart.splice(+id,1)}
+    saveCart();return render();
+  }
+  if(k==="out")return sb.auth.signOut();
+  if(k==="th"){
+    n?document.documentElement.dataset.theme=n:delete document.documentElement.dataset.theme;
+    n?localStorage.setItem("theme",n):localStorage.removeItem("theme");
+    b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));return;
+  }
+  if(k==="pl"||k==="co"){
+    b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
+    if(k==="pl"){sel.plastic=n;const p=D.plastics.find(x=>x.name===n);document.getElementById("pdesc").textContent=p?p.descr||"":""}else sel.color=n;return;
+  }
+  run(async()=>{
+    if(k==="send"){
+      if(!val("o-t").trim()){document.getElementById("o-e").textContent=a("need");return}
+      b.disabled=true;
+      const im=fil("o-i"),fl=fil("o-f");
+      const {error}=await sb.from("orders").insert({title:val("o-t").trim(),descr:val("o-d"),plastic:sel.plastic,color:sel.color,product_id:sel.pid,
+        image:im?await up(im,"orders"):null,file:fl?await up(fl,"orders"):null});
+      if(error)throw error;alert(a("sent"));sub="orders";return go("prof");
+    }
+    if(k==="checkout"){
+      b.disabled=true;
+      const rows=cart.map(x=>({title:x.title,plastic:x.plastic,color:x.color,product_id:x.pid,qty:x.qty,price:x.price,image:x.image}));
+      const {error}=await sb.from("orders").insert(rows);if(error)throw error;
+      cart=[];saveCart();alert(a("sent"));sub="orders";return go("prof");
+    }
+    if(k==="phone"){const {error}=await sb.from("profiles").update({phone:val("ph")}).eq("id",user.id);if(error)throw error;me.phone=val("ph");return}
+    if(k==="delo"){await sb.from("orders").delete().eq("id",id)}
+    if(k==="addp"){const im=fil("n3");{const f={title:val("n1"),descr:val("n2"),price:num("n4"),print_minutes:num("n5"),grams:num("n6")};if(im)f.image=await up(im,"products");if(sel.editId){await sb.from("products").update(f).eq("id",sel.editId);sel.editId=null}else await sb.from("products").insert(f)}}
+    if(k==="delp")await sb.from("products").delete().eq("id",id);
+    if(k==="addc")await sb.from("colors").insert({name:val("n1"),hex:val("n2")});
+    if(k==="stock"){const c=D.colors.find(x=>x.id==id);await sb.from("colors").update({in_stock:!c.in_stock}).eq("id",id)}
+    if(k==="delc")await sb.from("colors").delete().eq("id",id);
+    if(k==="addpl")await sb.from("plastics").insert({name:val("n1"),descr:val("n2")});
+    if(k==="delpl")await sb.from("plastics").delete().eq("id",id);
+    await refresh();
+  });
+}
+async function onChange(e){
+  const t=e.target,c=t.dataset.c;if(!c)return;
+  if(c==="th"){t.value?document.documentElement.dataset.theme=t.value:delete document.documentElement.dataset.theme;
+    t.value?localStorage.setItem("theme",t.value):localStorage.removeItem("theme");return}
+  if(c==="fp"){const l=t.closest(".fp");l.classList.toggle("has",!!t.files[0]);l.querySelector("span").textContent=t.files[0]?t.files[0].name:l.dataset.x;return}
+  if(c==="cl"){sel.cl=t.value;return render()}
+  run(async()=>{
+    if(c==="st")await sb.from("orders").update({status:t.value}).eq("id",t.dataset.id);
+    if(c==="gc"&&t.files[0]){await sb.from("orders").update({gcode:await up(t.files[0],"gcode")}).eq("id",t.dataset.id);await render()}
+    if(c==="av"&&t.files[0]){const u=await up(t.files[0],"avatars");await sb.from("profiles").update({avatar:u}).eq("id",user.id);me.avatar=u;await render()}
+  });
+}
+
+window.openApp=async()=>{
+  CARDS.forEach(x=>$(x).classList.add("hide"));
+  if(!root){
+    root=document.createElement("div");root.id="app";root.innerHTML='<div id="view"></div>';
+    nav=document.createElement("div");nav.id="nav";document.body.appendChild(nav);
+    fab=document.createElement("button");fab.id="fab";fab.innerHTML=ic("cart")+"<i></i>";fab.dataset.a="tab";fab.dataset.n="cart";document.body.appendChild(fab);
+    prop=document.createElement("button");prop.id="prop";prop.className="btn";prop.dataset.a="new";prop.innerHTML=ic("plus")+"<span></span>";document.body.appendChild(prop);
+    modal=document.createElement("div");modal.id="modal";document.body.appendChild(modal);
+    modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
+    document.querySelectorAll(".wrap")[1].appendChild(root);view=root.querySelector("#view");
+    document.addEventListener("click",onClick);document.addEventListener("change",onChange);
+  }
+  root.classList.remove("hide");nav.style.display="flex";
+  await load();tab="cat";await render();
+};
+window.closeApp=()=>{if(root){root.classList.add("hide");nav.style.display="none";fab.style.display=prop.style.display="none";closeModal()}};
+const sl=window.setLang;window.setLang=l=>{sl(l);if(root&&user&&!root.classList.contains("hide"))render()};
+if(user)openApp();
+})();
