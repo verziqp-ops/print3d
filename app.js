@@ -56,7 +56,7 @@ body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgb
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
 .card2{padding:18px;margin-bottom:12px}
 .hdr{position:sticky;top:12px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;margin:12px 0 22px;border-radius:999px}
-.hdr{transition:transform .4s var(--sp),opacity .25s;will-change:transform}.hdr.scroll-hidden{transform:translateY(calc(-100% - 24px));opacity:0;pointer-events:none}
+.hdr{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease;will-change:transform}.hdr.scroll-hidden{transform:translate3d(0,calc(-100% - 24px),0);opacity:0;pointer-events:none}
 .hdr .logo{cursor:pointer}.hdr nav{display:flex;gap:2px;flex:1}.ico{display:flex;align-items:center;gap:8px;margin-left:auto}
 .nl{border:0;background:none;color:var(--muted);font:600 15px var(--f);padding:8px 14px;border-radius:999px;cursor:pointer;transition:color .3s,transform .5s var(--sp)}
 .nl:hover{color:var(--text);transform:scale(1.07)}.nl.on{color:var(--accent)}
@@ -134,7 +134,8 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .cth .chat{max-width:none;margin:0}.back{display:none;margin-bottom:8px}
 @media(max-width:760px){.cw{grid-template-columns:1fr}.cw.has .clist{display:none}.cw:not(.has) .cth{display:none}.back{display:inline-block}}
 .cin{display:flex;gap:8px;align-items:center;margin-top:10px}.cin input[type=text]{flex:1}
-.chip:disabled{opacity:.45;cursor:not-allowed}.calc-panel{max-width:720px}.calc-panel h2{margin-top:12px!important}.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}.calc-fields input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--text);font:16px var(--f)}.calc-breakdown{display:grid;grid-template-columns:1fr auto;gap:10px;padding:18px 0;border-top:1px solid var(--line)}.calc-totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 20px}.calc-totals>div{padding:18px;border-radius:18px;background:var(--field);border:1px solid var(--line)}.calc-totals span{display:block;font-size:12px;color:var(--muted)}.calc-totals strong{display:block;font-size:25px;margin-top:8px;color:var(--accent);overflow-wrap:anywhere}@media(max-width:450px){.calc-fields,.calc-totals{grid-template-columns:1fr}}
+.chip:disabled{opacity:.45;cursor:not-allowed}.org-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.org-panel h2{margin-top:12px!important}.org-preview{height:420px;background:radial-gradient(ellipse at top,rgba(255,138,31,.08),rgba(0,0,0,.25));border:1px solid var(--line);border-radius:22px;overflow:hidden;display:grid;place-items:center}.org-preview canvas{display:block;width:100%;height:100%}@media(max-width:760px){.org-panel{grid-template-columns:1fr}.org-preview{height:340px}}
+.calc-panel{max-width:720px}.calc-panel h2{margin-top:12px!important}.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}.calc-fields input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--text);font:16px var(--f)}.calc-breakdown{display:grid;grid-template-columns:1fr auto;gap:10px;padding:18px 0;border-top:1px solid var(--line)}.calc-totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 20px}.calc-totals>div{padding:18px;border-radius:18px;background:var(--field);border:1px solid var(--line)}.calc-totals span{display:block;font-size:12px;color:var(--muted)}.calc-totals strong{display:block;font-size:25px;margin-top:8px;color:var(--accent);overflow-wrap:anywhere}@media(max-width:450px){.calc-fields,.calc-totals{grid-template-columns:1fr}}
 .g-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.g-modes .pill{margin-left:auto;font-size:9px;letter-spacing:1.4px}.g-progress{height:4px;background:var(--field);border-radius:4px;overflow:hidden;margin-top:12px}.g-progress i{display:block;height:100%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
 .m{white-space:pre-wrap}.m a{color:inherit;text-decoration:underline}.m{animation:message-in .5s var(--sp)}
 @keyframes message-in{from{opacity:0;transform:translateY(10px) scale(.95)}}
@@ -318,8 +319,58 @@ function updateCalculator(){
   document.getElementById('calc-rounded').textContent='';document.querySelector('[data-a="roundprice"]').disabled=!result;
 }
 
+const ORG_DEFAULT={width:180,depth:120,height:45,wall:2,bottom:2,columns:3,rows:2,color:'#ff8a1f'};
+let orgValues={...ORG_DEFAULT},orgModel=null,orgViewer=null,orgTimer=null;
+try{orgValues={...ORG_DEFAULT,...JSON.parse(localStorage.getItem('print3d:organizer')||'{}')}}catch(e){}
+function organizerHTML(){
+  const fields=[['width','Ширина, мм'],['depth','Глибина, мм'],['height','Висота, мм'],['columns','Колонки'],['rows','Ряди'],['wall','Товщина стінок, мм'],['bottom','Товщина дна, мм']];
+  return `<div class="tabs"><span class="chip on">Органайзер</span></div><section class="card2 org-panel"><div><span class="pill">PRINT3D / GENERATOR</span><h2>Генератор органайзерів</h2><p class="mut">Задай зовнішні розміри в міліметрах. Відділення однакового розміру, верх відкритий.</p>
+  <div class="chips"><button class="chip" data-a="org-preset" data-n="desk">Для столу</button><button class="chip" data-a="org-preset" data-n="drawer">Для шухляди</button><button class="chip" data-a="org-preset" data-n="pens">Для ручок</button></div>
+  <div class="calc-fields" style="margin-top:16px">${fields.map(([key,label])=>`<label class="f"><span>${label}</span><input type="number" data-org="${key}" min="${['rows','columns'].includes(key)?1:['width','depth'].includes(key)?10:key==='height'?5:.8}" ${['rows','columns'].includes(key)?'max="12" step="1"':'step="0.1"'} value="${esc(orgValues[key])}"></label>`).join('')}<label class="f"><span>Колір прев’ю</span><input type="color" data-org="color" value="${esc(orgValues.color)}" style="height:44px;width:100%"></label></div>
+  <p class="err" id="org-error" role="status"></p><p class="mut" id="org-info"></p><p class="mut" id="org-fit"></p>
+  <div class="rw" style="flex-wrap:wrap"><button class="btn" data-a="org-download">Завантажити STL</button><button class="chip" data-a="org-reset">Скинути</button></div><p class="mut">STL — у міліметрах, без кольору. Відкрий його в слайсері, щоб вибрати пластик, якість і отримати G-code.</p></div>
+  <div><div id="org-preview" class="org-preview"><p class="mut">Завантаження 3D…</p></div><p class="gl">Обертай мишею або пальцем · коліщатко для масштабу</p><button class="chip" id="org-camera">Повернути камеру</button></div></section>`;
+}
+function readOrganizer(){return Object.fromEntries([...document.querySelectorAll('[data-org]')].map(input=>[input.dataset.org,input.dataset.org==='color'?input.value:input.value===''?NaN:Number(input.value)]))}
+function updateOrganizer(){
+  if(!document.getElementById('org-error'))return;
+  const values=readOrganizer();orgModel=null;const button=document.querySelector('[data-a="org-download"]');
+  try{
+    const model=window.Print3DOrganizer.build(values);orgModel=model;orgValues=values;try{localStorage.setItem('print3d:organizer',JSON.stringify(values))}catch(e){}
+    document.getElementById('org-error').textContent='';document.getElementById('org-info').textContent=`${values.columns*values.rows} відділень · кожне ${model.cellWidth.toFixed(1)} × ${model.cellDepth.toFixed(1)} × ${(values.height-values.bottom).toFixed(1)} мм`;
+    const fits=values.width<=256&&values.depth<=256&&values.height<=256;document.getElementById('org-fit').textContent=fits?'✓ Габарити поміщаються в 256 × 256 × 256 мм. Залиш місце для кайми у слайсері.':'⚠ Габарити перевищують 256 × 256 × 256 мм — перевір розмір свого принтера.';
+    if(orgViewer)orgViewer.update(model,values.color);button.disabled=false;
+  }catch(e){document.getElementById('org-error').textContent=e.message;document.getElementById('org-info').textContent='';document.getElementById('org-fit').textContent='';button.disabled=true;if(orgViewer)orgViewer.clear()}
+}
+function queueOrganizerUpdate(){clearTimeout(orgTimer);const button=document.querySelector('[data-a="org-download"]');if(button)button.disabled=true;orgTimer=setTimeout(updateOrganizer,140)}
+function organizerPreset(name){
+  const presets={default:ORG_DEFAULT,desk:{...ORG_DEFAULT},drawer:{...ORG_DEFAULT,width:240,depth:180,height:30,columns:4,rows:3},pens:{...ORG_DEFAULT,width:120,depth:90,height:100,columns:3,rows:1}};
+  const preset=presets[name];if(!preset)return;document.querySelectorAll('[data-org]').forEach(input=>input.value=preset[input.dataset.org]);clearTimeout(orgTimer);updateOrganizer();if(orgViewer)orgViewer.fit();
+}
+function downloadOrganizer(){
+  clearTimeout(orgTimer);updateOrganizer();if(!orgModel)return;const p=orgModel.parameters,blob=new Blob([window.Print3DOrganizer.stl(orgModel)],{type:'model/stl'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=`Print3D-organizer-${p.width}x${p.depth}x${p.height}-${p.columns}x${p.rows}.stl`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+}
+async function mountOrganizer(){
+  const host=document.getElementById('org-preview');if(!host)return;updateOrganizer();
+  try{
+    const {T,OrbitControls}=await load3();if(!host.isConnected)return;
+    const scene=new T.Scene(),renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));host.innerHTML='';host.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';
+    const camera=new T.PerspectiveCamera(42,1,.1,10000),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=15;controls.maxDistance=4000;
+    scene.add(new T.HemisphereLight(0xffffff,0x59616c,2.2));const light=new T.DirectionalLight(0xffffff,2.5);light.position.set(200,400,300);scene.add(light);
+    const material=new T.MeshStandardMaterial({color:orgValues.color,roughness:.55,metalness:.05}),mesh=new T.Mesh(new T.BufferGeometry(),material);scene.add(mesh);
+    let disposed=false,first=true;
+    function fit(){const p=orgModel?orgModel.parameters:ORG_DEFAULT,span=Math.max(p.width,p.depth,p.height),aspect=Math.max(.3,host.clientWidth/host.clientHeight),distance=span*1.9/Math.min(1,aspect);camera.position.set(distance*.72,p.height+distance*.75,distance*.95);controls.target.set(0,p.height*.4,0);controls.update()}
+    function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
+    const observer=new ResizeObserver(resize);observer.observe(host);resize();
+    const viewer={fit,clear(){mesh.visible=false},update(model,color){const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(Float32Array.from(model.vertices),3));geometry.setIndex(model.triangles);const flat=geometry.toNonIndexed();geometry.dispose();flat.translate(-model.parameters.width/2,-model.parameters.depth/2,0);flat.rotateX(-Math.PI/2);flat.computeVertexNormals();mesh.geometry.dispose();mesh.geometry=flat;mesh.visible=true;material.color.set(color);if(first){first=false;fit()}},dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();mesh.geometry.dispose();material.dispose();renderer.dispose();if(orgViewer===viewer)orgViewer=null}};
+    orgViewer=viewer;document.getElementById('org-camera').onclick=fit;updateOrganizer();
+    function loop(){if(disposed)return;if(!host.isConnected){viewer.dispose();return}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
+  }catch(e){console.error('Organizer preview',e);if(host.isConnected)host.innerHTML='<p class="mut">3D-прев’ю недоступне. Генерація та завантаження STL працюють.</p>'}
+}
+
 async function admin(){
-  let h=tabs([["orders",a("orders")],["calc",lang==="ru"?"Калькулятор":"Калькулятор"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
+  let h=tabs([["orders",a("orders")],["calc","Калькулятор"],["generators",lang==="ru"?"Генераторы":"Генератори"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
   if(asub==="orders"){
     const [o,p]=await Promise.all([sb.from("orders").select("*").order("id",{ascending:false}),sb.from("profiles").select("id,first_name,last_name")]);
     const names={};(p.data||[]).forEach(x=>names[x.id]=((x.first_name||"")+" "+(x.last_name||"")).trim());
@@ -328,6 +379,7 @@ async function admin(){
       ((o.data||[]).filter(x=>!fcl||x.user_id===fcl).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
   if(asub==="calc")return h+calculatorHTML();
+  if(asub==="generators")return h+organizerHTML();
   if(asub==="prods"){
     const e=EP();
     return h+`<div class="card2" style="max-width:560px"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(e.title)}"></label>
@@ -350,18 +402,19 @@ async function admin(){
 let headerY=0,headerDirection=0,headerDistance=0;
 function headerShouldHide(home,y,delta,distance,hidden){
   if(!home||y<90)return false;
-  if(delta>0&&distance>18)return true;
-  if(delta<0&&distance>8)return false;
+  if(delta>0&&distance>64)return true;
+  if(delta<0&&distance>18)return false;
   return hidden;
 }
 function updateHeaderScroll(reset=false){
   if(!hdr)return;const y=Math.max(0,scrollY),delta=y-headerY,direction=Math.sign(delta);
-  if(reset){headerDirection=0;headerDistance=0;hdr.classList.remove('scroll-hidden')}
+  if(reset){headerDirection=0;headerDistance=0;if(y<90)hdr.classList.remove('scroll-hidden')}
   else{if(direction&&direction!==headerDirection)headerDistance=0;headerDistance+=Math.abs(delta);if(direction)headerDirection=direction;
-    hdr.classList.toggle('scroll-hidden',headerShouldHide(tab==='home',y,delta,headerDistance,hdr.classList.contains('scroll-hidden')))}
+    hdr.classList.toggle('scroll-hidden',headerShouldHide(true,y,delta,headerDistance,hdr.classList.contains('scroll-hidden')))}
   headerY=y;
 }
 async function render(){
+  clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
@@ -369,6 +422,7 @@ async function render(){
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   view.innerHTML=h;
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
+  if(tab==="prof"&&sub==="adm"&&asub==="generators")mountOrganizer();
   updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
@@ -615,6 +669,9 @@ async function onClick(e){
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
   if(k==="asub"){asub=n;return render()}
+  if(k==="org-download")return downloadOrganizer();
+  if(k==="org-preset")return organizerPreset(n);
+  if(k==="org-reset")return organizerPreset('default');
   if(k==="roundprice"){const result=readCalculator();if(result){document.getElementById("calc-rounded").textContent=moneyUA(Math.ceil(result.price))+" грн";}return}
   if(k==="new"){oopen=id;return go("order")}
   if(k==="goto"){const el=document.getElementById(n);return el&&el.scrollIntoView({behavior:"smooth",block:"start"})}
@@ -717,7 +774,7 @@ window.openApp=async()=>{
     modal=document.createElement("div");modal.id="modal";document.body.appendChild(modal);
     modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
     let scrollPending=false;addEventListener('scroll',()=>{if(!scrollPending){scrollPending=true;requestAnimationFrame(()=>{scrollPending=false;updateHeaderScroll()})}},{passive:true});
-    document.addEventListener('input',e=>{if(e.target.matches('[data-calc]'))updateCalculator()});
+    document.addEventListener('input',e=>{if(e.target.matches('[data-calc]'))updateCalculator();if(e.target.matches('[data-org]'))queueOrganizerUpdate()});
     document.addEventListener("click",onClick);document.addEventListener("change",onChange);
     document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cin"){e.preventDefault();const b=document.querySelector("[data-a=msg]");b&&b.click()}});
     setInterval(()=>{if(!document.hidden)pollChat()},4000);
