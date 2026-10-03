@@ -20,7 +20,7 @@ add:["Додати","Добавить"],del:["Видалити","Удалить"
 plastics:["Пластик","Пластик"],title:["Назва","Название"],descr:["Опис","Описание"],err:["Помилка, спробуйте ще раз","Ошибка, попробуйте ещё раз"],
 price:["Ціна, грн","Цена, грн"],mins:["Час друку, хв","Время печати, мин"],grams:["Пластик, г","Пластик, г"],addCart:["В кошик","В корзину"],
 orderThis:["Замовити окремо","Заказать отдельно"],total:["Разом","Итого"],checkout:["Оформити замовлення","Оформить заказ"],
-cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Переглянути друк по шарах","Посмотреть печать по слоям"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["Лайв","Лайв"],process:["Процес","Процесс"],simulation:["Розрахункова симуляція · час від завантаження G-code","Расчётная симуляция · время от загрузки G-code"],noStart:["Для Лайв повторно завантажте G-code","Для Лайв повторно загрузите G-code"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
+cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Переглянути друк по шарах","Посмотреть печать по слоям"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["Лайв","Лайв"],process:["Процес","Процесс"],simulation:["Розрахункова симуляція · час від початку друку","Расчётная симуляция · время от начала печати"],noStart:["Лайв почнеться зі статусу «Друкується»","Лайв начнётся со статуса «Печатается»"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
 const a=k=>(S[k]||[k,k])[lang==="ru"?1:0];
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ST=["pending","printing","ready","shipping","delivered"];
@@ -56,6 +56,7 @@ body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgb
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
 .card2{padding:18px;margin-bottom:12px}
 .hdr{position:sticky;top:12px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;margin:12px 0 22px;border-radius:999px}
+.hdr{transition:transform .4s var(--sp),opacity .25s;will-change:transform}.hdr.scroll-hidden{transform:translateY(calc(-100% - 24px));opacity:0;pointer-events:none}
 .hdr .logo{cursor:pointer}.hdr nav{display:flex;gap:2px;flex:1}.ico{display:flex;align-items:center;gap:8px;margin-left:auto}
 .nl{border:0;background:none;color:var(--muted);font:600 15px var(--f);padding:8px 14px;border-radius:999px;cursor:pointer;transition:color .3s,transform .5s var(--sp)}
 .nl:hover{color:var(--text);transform:scale(1.07)}.nl.on{color:var(--accent)}
@@ -133,7 +134,8 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .cth .chat{max-width:none;margin:0}.back{display:none;margin-bottom:8px}
 @media(max-width:760px){.cw{grid-template-columns:1fr}.cw.has .clist{display:none}.cw:not(.has) .cth{display:none}.back{display:inline-block}}
 .cin{display:flex;gap:8px;align-items:center;margin-top:10px}.cin input[type=text]{flex:1}
-.chip:disabled{opacity:.45;cursor:not-allowed}.g-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.g-modes .pill{margin-left:auto;font-size:9px;letter-spacing:1.4px}.g-progress{height:4px;background:var(--field);border-radius:4px;overflow:hidden;margin-top:12px}.g-progress i{display:block;height:100%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.chip:disabled{opacity:.45;cursor:not-allowed}.calc-panel{max-width:720px}.calc-panel h2{margin-top:12px!important}.calc-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}.calc-fields input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--text);font:16px var(--f)}.calc-breakdown{display:grid;grid-template-columns:1fr auto;gap:10px;padding:18px 0;border-top:1px solid var(--line)}.calc-totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 20px}.calc-totals>div{padding:18px;border-radius:18px;background:var(--field);border:1px solid var(--line)}.calc-totals span{display:block;font-size:12px;color:var(--muted)}.calc-totals strong{display:block;font-size:25px;margin-top:8px;color:var(--accent);overflow-wrap:anywhere}@media(max-width:450px){.calc-fields,.calc-totals{grid-template-columns:1fr}}
+.g-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.g-modes .pill{margin-left:auto;font-size:9px;letter-spacing:1.4px}.g-progress{height:4px;background:var(--field);border-radius:4px;overflow:hidden;margin-top:12px}.g-progress i{display:block;height:100%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
 .m{white-space:pre-wrap}.m a{color:inherit;text-decoration:underline}.m{animation:message-in .5s var(--sp)}
 @keyframes message-in{from{opacity:0;transform:translateY(10px) scale(.95)}}
 #app .glass,#app .card2{transition:transform .55s var(--sp),border-color .3s,box-shadow .3s}
@@ -234,11 +236,12 @@ async function pollChat(force){
   if(bottom)box.scrollTop=box.scrollHeight;
 }
 
+function canViewPrint(o,admin=false){return !!o.gcode&&(admin||['printing','ready','shipping','delivered'].includes(o.status))}
 function orderItem(o,adm,names){
   return `<div class="card2 oi"><div data-a="oopen" data-id="${o.id}" style="cursor:pointer">${o.image?`<img src="${esc(o.image)}">`:""}<b>${esc(o.title)}</b> ${badge(o.status)}
   ${adm?`<p class="mut">${a("client")}: ${esc(names[o.user_id]||"")}</p>`:""}
   <p class="mut">${esc(o.plastic||"")} ${esc(o.color||"")} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
-  ${o.gcode?`<p class="mut" style="color:var(--accent)">▶ ${a("layers")}</p>`:""}</div>
+  ${canViewPrint(o,adm)?`<p class="mut" style="color:var(--accent)">▶ ${a("layers")}</p>`:""}</div>
   ${o.descr?`<p>${esc(o.descr)}</p>`:""}${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}
   ${adm?`<div class="rw"><select data-c="st" data-id="${o.id}">${ST.map(s=>`<option value="${s}" ${s===o.status?"selected":""}>${a(s)}</option>`).join("")}</select></div>
   <div class="rw"><label class="btn ghost" style="cursor:pointer;min-width:0">${a("gcode")}<input type="file" data-c="gc" data-id="${o.id}" hidden></label>${o.gcode?`<a class="link" href="${esc(o.gcode)}" target="_blank">G-code</a>`:""}
@@ -274,8 +277,49 @@ async function profile(){
   <div class="lb">${a("phone")}</div><div class="rw"><input type="text" id="ph" inputmode="tel" value="${esc(me.phone||"")}"><button class="btn" style="min-width:0" data-a="phone">${a("save")}</button></div>
   <div style="height:10px"></div><button class="btn ghost blk" data-a="out">${a("out")}</button></div>`;
 }
+const CALC_FIELDS=[
+  ['tariff','Тариф за світло, грн/кВт·год','Тариф за свет, грн/кВт·ч','0.01',''],
+  ['watts','Середня потужність принтера, Вт','Средняя мощность принтера, Вт','1',''],
+  ['spoolGrams','Маса пластику в котушці, г','Масса пластика в катушке, г','1','1000'],
+  ['spoolPrice','Ціна котушки, грн','Цена катушки, грн','0.01',''],
+  ['hours','Час друку — години','Время печати — часы','1','0'],
+  ['minutes','Час друку — хвилини','Время печати — минуты','1','0'],
+  ['grams','Пластик на деталь, г','Пластик на деталь, г','0.01',''],
+  ['markup','Націнка, %','Наценка, %','0.01','0']
+];
+let calculatorValues={};try{calculatorValues=JSON.parse(localStorage.getItem('print3d:calculator')||'{}')||{}}catch(e){}
+function calculatePrintCost(v){
+  const keys=['tariff','watts','spoolGrams','spoolPrice','hours','minutes','grams','markup'];
+  if(keys.some(k=>v[k]===''||v[k]==null||!Number.isFinite(Number(v[k]))))return null;
+  const n=Object.fromEntries(keys.map(k=>[k,Number(v[k])]));
+  if(keys.some(k=>n[k]<0)||n.spoolGrams<=0||n.minutes>=60||!Number.isInteger(n.hours)||!Number.isInteger(n.minutes))return null;
+  const time=n.hours+n.minutes/60,energy=n.watts/1000*time,electricity=energy*n.tariff,plastic=n.spoolPrice/n.spoolGrams*n.grams,cost=plastic+electricity,price=cost*(1+n.markup/100);
+  return [energy,electricity,plastic,cost,price].every(Number.isFinite)?{energy,electricity,plastic,cost,price}:null;
+}
+const moneyUA=n=>(Math.round((n+Number.EPSILON)*100)/100).toFixed(2).replace('.',',');
+function calculatorHTML(){
+  const ru=lang==='ru';
+  return `<section class="card2 calc-panel"><span class="pill">PRINT3D</span><h2>${ru?'Себестоимость печати':'Собівартість друку'}</h2>
+  <p class="mut">${ru?'Введите свои цены и среднюю мощность принтера во время печати.':'Введи свої ціни та середню потужність принтера під час друку.'}</p>
+  <div class="calc-fields">${CALC_FIELDS.map(([key,uk,rus,step,defaultValue])=>`<label class="f"><span>${ru?rus:uk}</span><input type="number" data-calc="${key}" min="0" ${key==='minutes'?'max="59"':''} step="${step}" inputmode="decimal" value="${esc(calculatorValues[key]??defaultValue)}"></label>`).join('')}</div>
+  <p class="mut" id="calc-error" role="status"></p>
+  <div class="calc-breakdown"><span>${ru?'Пластик':'Пластик'}</span><b id="calc-plastic">—</b><span>${ru?'Электричество':'Електроенергія'}</span><b id="calc-electricity">—</b><span>${ru?'Расход энергии':'Споживання енергії'}</span><b id="calc-energy">—</b></div>
+  <div class="calc-totals"><div><span>${ru?'Себестоимость':'Собівартість'}</span><strong id="calc-cost">—</strong></div><div><span>${ru?'Цена с наценкой':'Ціна з націнкою'}</span><strong id="calc-price">—</strong></div></div>
+  <div class="rw"><button class="btn" data-a="roundprice">${ru?'Округлить вверх':'Округлити вгору'}</button><b id="calc-rounded" aria-live="polite"></b></div>
+  <p class="mut">${ru?'Наценка начисляется на себестоимость. Округление — вверх до целой гривны. Здесь учитываются пластик и свет; работа, износ принтера, упаковка и брак не включены.':'Націнка додається до собівартості. Округлення — вгору до цілої гривні. Тут враховані пластик і світло; робота, зношення принтера, пакування та брак не включені.'}</p></section>`;
+}
+function readCalculator(){return calculatePrintCost(Object.fromEntries([...document.querySelectorAll('[data-calc]')].map(input=>[input.dataset.calc,input.value])))}
+function updateCalculator(){
+  const inputs=[...document.querySelectorAll('[data-calc]')];if(!inputs.length)return;
+  calculatorValues=Object.fromEntries(inputs.map(input=>[input.dataset.calc,input.value]));try{localStorage.setItem('print3d:calculator',JSON.stringify(calculatorValues))}catch(e){}
+  const result=readCalculator();document.getElementById('calc-error').textContent=result?'':(lang==='ru'?'Заполните все поля. Масса катушки должна быть больше 0, минуты — от 0 до 59.':'Заповни всі поля. Маса котушки має бути більшою за 0, хвилини — від 0 до 59.');
+  for(const key of ['plastic','electricity','cost','price'])document.getElementById('calc-'+key).textContent=result?moneyUA(result[key])+' грн':'—';
+  document.getElementById('calc-energy').textContent=result?result.energy.toFixed(3).replace('.',',')+' кВт·год':'—';
+  document.getElementById('calc-rounded').textContent='';document.querySelector('[data-a="roundprice"]').disabled=!result;
+}
+
 async function admin(){
-  let h=tabs([["orders",a("orders")],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
+  let h=tabs([["orders",a("orders")],["calc",lang==="ru"?"Калькулятор":"Калькулятор"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
   if(asub==="orders"){
     const [o,p]=await Promise.all([sb.from("orders").select("*").order("id",{ascending:false}),sb.from("profiles").select("id,first_name,last_name")]);
     const names={};(p.data||[]).forEach(x=>names[x.id]=((x.first_name||"")+" "+(x.last_name||"")).trim());
@@ -283,6 +327,7 @@ async function admin(){
     return h+`<div class="rw" style="max-width:360px"><select data-c="cl"><option value="">${a("client")}: —</option>${Object.entries(names).map(([i,n])=>`<option value="${i}" ${i===fcl?"selected":""}>${esc(n)}</option>`).join("")}</select></div>`+
       ((o.data||[]).filter(x=>!fcl||x.user_id===fcl).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
+  if(asub==="calc")return h+calculatorHTML();
   if(asub==="prods"){
     const e=EP();
     return h+`<div class="card2" style="max-width:560px"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(e.title)}"></label>
@@ -291,7 +336,7 @@ async function admin(){
     <div class="rw"><select id="n8"><option value="">${a("category")}: —</option>${D.cats.map(c=>`<option value="${c.id}" ${e.category_id==c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
     <div class="rw"><select id="n9"><option value="">${a("material")}: ${a("byClient")}</option>${D.plastics.map(x=>`<option ${e.plastic===x.name?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>
     <div class="lb">${a("color")}</div><div class="chips" id="n10">${D.colors.map(c=>`<button class="chip ${(e.colors||[]).includes(c.name)?"on":""}" data-a="pc" data-n="${esc(c.name)}"><i style="background:${esc(c.hex)}"></i>${esc(c.name)}</button>`).join("")}</div>
-    ${fp("n3",a("photo"),"image/*")}${fp("n7",a("model"),".stl,.3mf")}
+    ${fp("n3",a("photo"),"image/*")}${fp("n7",a("model"),".stl,.3mf")}${fp("n11",a("gcode"),".gcode,.gco,.gc")}${e.gcode?`<p class="mut">G-code завантажений · новий файл замінить його</p>`:""}
     <button class="btn blk" data-a="addp">${editId?a("save"):a("add")}</button>${editId?`<p class="mut" style="text-align:center"><button class="link" data-a="cancelp">${a("cancel")}</button></p>`:""}</div>`+
     D.products.map(p=>`<div class="card2 rw"><b style="flex:1">${esc(p.title)}<br><span class="mut">${esc(pinfo(p))}</span></b><button class="link" data-a="editp" data-id="${p.id}">${a("edit")}</button><button class="link" data-a="delp" data-id="${p.id}">${a("del")}</button></div>`).join("");
   }
@@ -302,6 +347,20 @@ async function admin(){
   return h+`<div class="card2" style="max-width:480px"><label class="f"><span>${a("title")}</span><input type="text" id="n1" placeholder="PLA"></label><label class="f"><span>${a("descr")}</span><textarea id="n2"></textarea></label><button class="btn blk" data-a="addpl">${a("add")}</button></div>`+
     D.plastics.map(x=>`<div class="card2"><div class="rw"><b style="flex:1">${esc(x.name)}</b><button class="link" data-a="delpl" data-id="${x.id}">${a("del")}</button></div><p class="mut">${esc(x.descr)}</p></div>`).join("");
 }
+let headerY=0,headerDirection=0,headerDistance=0;
+function headerShouldHide(home,y,delta,distance,hidden){
+  if(!home||y<90)return false;
+  if(delta>0&&distance>18)return true;
+  if(delta<0&&distance>8)return false;
+  return hidden;
+}
+function updateHeaderScroll(reset=false){
+  if(!hdr)return;const y=Math.max(0,scrollY),delta=y-headerY,direction=Math.sign(delta);
+  if(reset){headerDirection=0;headerDistance=0;hdr.classList.remove('scroll-hidden')}
+  else{if(direction&&direction!==headerDirection)headerDistance=0;headerDistance+=Math.abs(delta);if(direction)headerDirection=direction;
+    hdr.classList.toggle('scroll-hidden',headerShouldHide(tab==='home',y,delta,headerDistance,hdr.classList.contains('scroll-hidden')))}
+  headerY=y;
+}
 async function render(){
   head();let h="";
   try{
@@ -309,6 +368,8 @@ async function render(){
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   view.innerHTML=h;
+  if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
+  updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
 }
@@ -327,7 +388,7 @@ function openProduct(id){
   ${D.plastics.length||p.plastic?`<div class="lb">${a("material")}</div>${mat}<p class="mut" id="mpd">${esc(pl?pl.descr||"":"")}</p>`:""}
   ${cl.length?`<div class="lb">${a("color")}</div>${col}`:""}
   <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}">${ic("heart")}</button></div>
-  <button class="btn ghost blk" data-a="new" data-id="${p.id}">${a("orderThis")}</button></div></div>`;
+  </div></div>`;
   modal.classList.add("show");
 }
 const ORD={};
@@ -479,15 +540,16 @@ async function gview(box,url,o){
 }
 function openOrder(id){
   const o=ORD[id];if(!o)return;
+  const showPrint=canViewPrint(o,me.is_admin);
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
   modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
-  ${o.gcode?`<div class="gv" id="gv"></div>`:`<div class="media">${o.image?`<img src="${esc(o.image)}">`:ic("cube")}</div>`}
+  ${showPrint?`<div class="gv" id="gv"></div>`:`<div class="media">${o.image?`<img src="${esc(o.image)}">`:ic("cube")}</div>`}
   <div><h2>${esc(o.title)}</h2><p>${badge(o.status)}</p>
   <p class="mut">${esc([o.plastic,o.color].filter(Boolean).join(" · "))} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
-  ${o.descr?`<p class="mut">${esc(o.descr)}</p>`:""}${o.gcode&&o.image?`<img src="${esc(o.image)}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-top:8px">`:""}
+  ${o.descr?`<p class="mut">${esc(o.descr)}</p>`:""}${showPrint&&o.image?`<img src="${esc(o.image)}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-top:8px">`:""}
   ${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}</div></div>`;
   modal.classList.add("show");
-  if(o.gcode)gview(document.getElementById("gv"),o.gcode,{status:o.status,started});
+  if(showPrint)gview(document.getElementById("gv"),o.gcode,{status:o.status,started});
 }
 let T3=null;const G3={};
 const load3=()=>T3||(T3=(async()=>{const B="https://cdn.jsdelivr.net/npm/three@0.160.0/";const T=await import(B+"+esm");const {OrbitControls}=await import(B+"examples/jsm/controls/OrbitControls.js/+esm");return {T,OrbitControls,B}})());
@@ -543,6 +605,7 @@ async function onClick(e){
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
   if(k==="asub"){asub=n;return render()}
+  if(k==="roundprice"){const result=readCalculator();if(result){document.getElementById("calc-rounded").textContent=moneyUA(Math.ceil(result.price))+" грн";}return}
   if(k==="new"){oopen=id;return go("order")}
   if(k==="goto"){const el=document.getElementById(n);return el&&el.scrollIntoView({behavior:"smooth",block:"start"})}
   if(k==="cf"){fcat=n===""?null:+n;document.getElementById("cg").innerHTML=catBlock();return}
@@ -602,9 +665,10 @@ async function onClick(e){
     if(k==="phone"){const {error}=await sb.from("profiles").update({phone:val("ph")}).eq("id",user.id);if(error)throw error;me.phone=val("ph");return}
     if(k==="delo")await sb.from("orders").delete().eq("id",id);
     if(k==="addp"){
-      const im=fil("n3"),md=fil("n7");
+      const im=fil("n3"),md=fil("n7"),gc=fil("n11");
       const f={title:val("n1"),descr:val("n2"),price:num("n4"),print_minutes:num("n5"),grams:num("n6"),category_id:num("n8"),plastic:val("n9")||null,colors:[...document.querySelectorAll("#n10 .chip.on")].map(x=>x.dataset.n)};
       if(im)f.image=await up(im,"products");if(md){if(md.size>45e6){alert(a("big"));return}f.model=await up(md,"models")}
+      if(gc)f.gcode=await up(gc,"gcode");
       const r=editId?await sb.from("products").update(f).eq("id",editId):await sb.from("products").insert(f);
       if(r.error)throw r.error;editId=null;
     }
@@ -642,6 +706,8 @@ window.openApp=async()=>{
     help.innerHTML=`<span class="hi">${ic("chat")}</span><span><b></b><small></small></span>`;document.body.appendChild(help);
     modal=document.createElement("div");modal.id="modal";document.body.appendChild(modal);
     modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
+    let scrollPending=false;addEventListener('scroll',()=>{if(!scrollPending){scrollPending=true;requestAnimationFrame(()=>{scrollPending=false;updateHeaderScroll()})}},{passive:true});
+    document.addEventListener('input',e=>{if(e.target.matches('[data-calc]'))updateCalculator()});
     document.addEventListener("click",onClick);document.addEventListener("change",onChange);
     document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="cin"){e.preventDefault();const b=document.querySelector("[data-a=msg]");b&&b.click()}});
     setInterval(()=>{if(!document.hidden)pollChat()},4000);
