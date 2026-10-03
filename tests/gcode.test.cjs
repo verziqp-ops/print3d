@@ -56,3 +56,16 @@ test('non-extruding arcs still move the start of the next printed segment',()=>{
 test('empty or travel-only files do not invent geometry',()=>{
   assert.equal(parse('G1 X10 Y20\nG1 Z1').layers.length,0);
 });
+test('segment animation is continuous and respects travel gaps',()=>{
+  const g=parse('M83\nG1 Z.2 F600\nG1 X10 E1\nG0 X20\nG1 X30 E1'),L=g.layers[0];
+  const mid=(L.ts[0]+L.t[0])/2,c=context.gSegmentAt(L,mid);
+  assert.equal(c.index,0);near(c.fraction,.5);
+  const gap=(L.t[0]+L.ts[1])/2;near(context.gSegmentAt(L,gap).fraction,0);
+  const motion=context.gMotionAt(g.moves,gap);near(motion[0],15);
+  near(context.gMotionAt(g.moves,g.T+100)[0],30);
+});
+test('scaled slicer timing applies equally to tool motion and deposited segments',()=>{
+  const g=parse('; model printing time: 2m\nM83\nG1 Z.2 F600\nG1 X10 E1');
+  near(g.moves.at(-1),120);near(g.layers[0].t[0],120);
+  near(context.gMotionAt(g.moves, (g.layers[0].ts[0]+120)/2)[0],5);
+});

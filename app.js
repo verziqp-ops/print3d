@@ -20,7 +20,7 @@ add:["Додати","Добавить"],del:["Видалити","Удалить"
 plastics:["Пластик","Пластик"],title:["Назва","Название"],descr:["Опис","Описание"],err:["Помилка, спробуйте ще раз","Ошибка, попробуйте ещё раз"],
 price:["Ціна, грн","Цена, грн"],mins:["Час друку, хв","Время печати, мин"],grams:["Пластик, г","Пластик, г"],addCart:["В кошик","В корзину"],
 orderThis:["Замовити окремо","Заказать отдельно"],total:["Разом","Итого"],checkout:["Оформити замовлення","Оформить заказ"],
-cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Переглянути друк по шарах","Посмотреть печать по слоям"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["Наживо","Вживую"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
+cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Переглянути друк по шарах","Посмотреть печать по слоям"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["Лайв","Лайв"],process:["Процес","Процесс"],simulation:["Розрахункова симуляція · час від завантаження G-code","Расчётная симуляция · время от загрузки G-code"],noStart:["Для Лайв повторно завантажте G-code","Для Лайв повторно загрузите G-code"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
 const a=k=>(S[k]||[k,k])[lang==="ru"?1:0];
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ST=["pending","printing","ready","shipping","delivered"];
@@ -133,6 +133,15 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .cth .chat{max-width:none;margin:0}.back{display:none;margin-bottom:8px}
 @media(max-width:760px){.cw{grid-template-columns:1fr}.cw.has .clist{display:none}.cw:not(.has) .cth{display:none}.back{display:inline-block}}
 .cin{display:flex;gap:8px;align-items:center;margin-top:10px}.cin input[type=text]{flex:1}
+.chip:disabled{opacity:.45;cursor:not-allowed}.g-modes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.g-modes .pill{margin-left:auto;font-size:9px;letter-spacing:1.4px}.g-progress{height:4px;background:var(--field);border-radius:4px;overflow:hidden;margin-top:12px}.g-progress i{display:block;height:100%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.m{white-space:pre-wrap}.m a{color:inherit;text-decoration:underline}.m{animation:message-in .5s var(--sp)}
+@keyframes message-in{from{opacity:0;transform:translateY(10px) scale(.95)}}
+#app .glass,#app .card2{transition:transform .55s var(--sp),border-color .3s,box-shadow .3s}
+#app .pcard:hover{transform:translateY(-5px);border-color:rgba(255,138,31,.35);box-shadow:0 18px 50px -25px rgba(255,138,31,.3)}
+#app button{transition:transform .5s var(--sp),background .3s,box-shadow .3s}#app button:not(:disabled):active{transform:scale(.92)}
+#app input:focus,#app textarea:focus,#app select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,138,31,.12)}
+#view .grid>*{animation:message-in .6s var(--sp) both}#view .grid>*:nth-child(3n+2){animation-delay:.05s}#view .grid>*:nth-child(3n){animation-delay:.1s}
+#app .logo{letter-spacing:-.6px}#app .btn{box-shadow:0 8px 28px -14px rgba(255,138,31,.65)}
 @media (prefers-reduced-motion:reduce){#view>*,.bub,.hd img{animation:none}}`;
 document.head.appendChild(css);
 
@@ -188,7 +197,8 @@ const favView=()=>`<h2>${a("fav")}</h2>`+(favs.size?grid(D.products.filter(p=>fa
 let chatUid=null,chatSig="";
 const seenGet=u=>+localStorage.getItem("seen:"+u)||0;
 const seenSet=(u,id)=>{try{localStorage.setItem("seen:"+u,id)}catch(e){}};
-const msgHTML=m=>`<div class="m ${m.sender_id===user.id?"me":""}">${m.image?`<img src="${esc(m.image)}">`:""}${esc(m.body||"")}<small>${new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></div>`;
+const msgBody=body=>String(body||'').split(/(https?:\/\/[^\s<>"']+)/g).map((part,i)=>i%2?`<a href="${esc(part)}" target="_blank" rel="noopener noreferrer">${esc(part)}</a>`:esc(part)).join('');
+const msgHTML=m=>`<div class="m ${m.sender_id===user.id?"me":""}">${m.image?`<img src="${esc(m.image)}">`:""}${msgBody(m.body)}<small>${new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></div>`;
 async function threadHTML(uid){
   const {data}=await sb.from("messages").select("*").eq("user_id",uid).order("id");
   chatSig=String(data&&data.length?data[data.length-1].id:0);
@@ -322,17 +332,17 @@ function openProduct(id){
 }
 const ORD={};
 function parseG(txt){
-  const layers=[],byZ=new Map();
+  const layers=[],moves=[],byZ=new Map();
   let x=0,y=0,z=0,e=0,f=1500,relative=false,relativeE=false,unit=1,t=0;
   let modelTime=null,totalTime=null,totalLayers=null,maxZ=null,width=.45,height=.2,role='',inModel=!/;\s*(?:CHANGE_LAYER|LAYER_CHANGE|LAYER\s*:)/i.test(txt),layerHeightKnown=false;
   const duration=s=>{let sum=0,found=false;for(const m of s.matchAll(/(\d+(?:\.\d+)?)\s*(d(?:ays?)?|h(?:ours?)?|m(?:in(?:utes?)?)?|s(?:ec(?:onds?)?)?)/gi)){found=true;sum+=+m[1]*({d:86400,h:3600,m:60,s:1}[m[2][0].toLowerCase()])}return found?sum:null};
   function add(ax,ay,bx,by,az,bz,amount,time){
     const len=Math.hypot(bx-ax,by-ay);if(len<1e-7||amount<=0||!inModel||/custom|wipe|prime tower/i.test(role))return;
     const key=Math.round(bz*10000);let L=byZ.get(key);
-    if(!L){L={z:bz,h:height,s:[],w:[],t:[],t0:t-time};byZ.set(key,L);layers.push(L)}
+    if(!L){L={z:bz,h:height,s:[],w:[],t:[],ts:[],t0:t-time};byZ.set(key,L);layers.push(L)}
     // Slicers annotate width/height. Otherwise derive deposited volume from 1.75 mm filament.
     const w=width||Math.max(.15,Math.min(1.5,amount*Math.PI*.875*.875/(len*height)+(1-Math.PI/4)*height));
-    L.s.push(ax,ay,az,bx,by,bz);L.w.push(w);L.t.push(t);
+    L.s.push(ax,ay,az,bx,by,bz);L.w.push(w);L.t.push(t);L.ts.push(t-time);
   }
   for(const raw of txt.split(/\r?\n/)){
     const comment=raw.slice(raw.indexOf(';')+1);
@@ -375,13 +385,23 @@ function parseG(txt){
         points=[];for(let i=1;i<=count;i++){const u=i/count,a=start+delta*u;points.push(i===count?[nx,ny,nz]:[cx+radius*Math.cos(a),cy+radius*Math.sin(a),z+(nz-z)*u])}
       }
     }
-    let px=x,py=y,pz=z;for(const [qx,qy,qz] of points){const dt=Math.hypot(qx-px,qy-py,qz-pz)/(Math.max(1,f)/60);t+=dt;add(px,py,qx,qy,pz,qz,amount/points.length,dt);px=qx;py=qy;pz=qz}
+    let px=x,py=y,pz=z;for(const [qx,qy,qz] of points){const dt=Math.hypot(qx-px,qy-py,qz-pz)/(Math.max(1,f)/60);t+=dt;if(inModel)moves.push(px,py,pz,qx,qy,qz,t-dt,t);add(px,py,qx,qy,pz,qz,amount/points.length,dt);px=qx;py=qy;pz=qz}
     x=nx;y=ny;z=nz;e=ne;
   }
   const target=modelTime||totalTime||t,k=t?target/t:1;
   layers.sort((a,b)=>a.z-b.z);
-  layers.forEach((L,i)=>{if(!layerHeightKnown)L.h=Math.max(.04,Math.min(.6,i?L.z-layers[i-1].z:L.z||.2));L.s=Float32Array.from(L.s);L.w=Float32Array.from(L.w);L.t=Float32Array.from(L.t,v=>v*k);L.t0*=k;L.t1=L.t.length?L.t[L.t.length-1]:L.t0});
-  return {layers,T:target,modelTime,totalTime,totalLayers,maxZ};
+  layers.forEach((L,i)=>{if(!layerHeightKnown)L.h=Math.max(.04,Math.min(.6,i?L.z-layers[i-1].z:L.z||.2));L.s=Float32Array.from(L.s);L.w=Float32Array.from(L.w);L.t=Float32Array.from(L.t,v=>v*k);L.ts=Float32Array.from(L.ts,v=>v*k);L.t0*=k;L.t1=L.t.length?L.t[L.t.length-1]:L.t0});
+  for(let i=0;i<moves.length;i+=8){moves[i+6]*=k;moves[i+7]*=k}
+  return {layers,moves:Float32Array.from(moves),T:target,modelTime,totalTime,totalLayers,maxZ};
+}
+function gSegmentAt(L,elapsed){
+  let lo=0,hi=L.t.length;while(lo<hi){const mid=(lo+hi)>>1;if(L.t[mid]<=elapsed)lo=mid+1;else hi=mid}
+  const start=L.ts[lo],end=L.t[lo];return {index:lo,fraction:lo<L.t.length?Math.max(0,Math.min(1,(elapsed-start)/Math.max(1e-9,end-start))):1};
+}
+function gMotionAt(moves,elapsed){
+  let lo=0,hi=moves.length/8;while(lo<hi){const mid=(lo+hi)>>1;if(moves[mid*8+7]<=elapsed)lo=mid+1;else hi=mid}
+  if(!moves.length)return null;const j=Math.min(lo,moves.length/8-1)*8,u=Math.max(0,Math.min(1,(elapsed-moves[j+6])/Math.max(1e-9,moves[j+7]-moves[j+6])));
+  return [0,1,2].map(axis=>moves[j+axis]+(moves[j+axis+3]-moves[j+axis])*u);
 }
 function gLayerGeometry(T,L,cx,cy,base){
   const count=L.s.length/6,positions=new Float32Array(count*36),normals=new Float32Array(count*36),indices=new Uint32Array(count*60);
@@ -417,7 +437,7 @@ async function gview(box,url,o){
     const plateSize=Math.max(maxX-minX,maxY-minY,10)*1.25,plateGeo=new T.PlaneGeometry(plateSize,plateSize),plateMat=new T.MeshStandardMaterial({color:0x23272d,roughness:1,side:T.DoubleSide}),plate=new T.Mesh(plateGeo,plateMat);plate.rotation.x=-Math.PI/2;plate.position.y=-.06;scene.add(plate);
     const grid=new T.GridHelper(plateSize,20,0x555c65,0x343a42);grid.position.y=-.04;scene.add(grid);
     const n=meshes.length;
-    box.innerHTML='<div class="g3box"></div><div class="gc"><button class="ib" id="gp" aria-label="Play">▶</button><input type="range" id="gs" aria-label="'+a('layer')+'" min="1" max="'+n+'" value="'+n+'">'+(o.started?'<button class="chip" id="gl2">'+a('live')+'</button>':'')+'<button class="chip" id="gf">'+(lang==='ru'?'Весь объект':'Вся модель')+'</button></div><div class="gl" id="gl"></div>';
+    box.innerHTML='<div class="g-modes"><button class="chip on" id="gm">'+a('process')+'</button><button class="chip" id="gl2" '+(!o.started?'disabled':'')+'>'+a('live')+'</button><span class="pill">PRINT3D</span></div><div class="g3box"></div><div class="gc"><button class="ib" id="gp" aria-label="Play">▶</button><input type="range" id="gs" aria-label="'+a('layer')+'" min="1" max="'+n+'" value="'+n+'"><button class="chip" id="gf">'+(lang==='ru'?'Весь объект':'Вся модель')+'</button></div><div class="g-progress"><i></i></div><div class="gl" id="gl"></div><p class="gl">'+a(o.started?'simulation':'noStart')+'</p>';
     const host=box.querySelector('.g3box');host.style.cssText='width:100%;height:min(58vh,520px);min-height:330px;border-radius:20px;overflow:hidden;cursor:grab;';
     const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));host.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';
     const camera=new T.PerspectiveCamera(42,1,Math.max(.01,span/10000),span*50),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.enablePan=true;controls.minDistance=span*.1;controls.maxDistance=span*10;
@@ -426,20 +446,35 @@ async function gview(box,url,o){
     function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
     resize();fit();const observer=new ResizeObserver(resize);observer.observe(host);
     const gp=box.querySelector('#gp'),slider=box.querySelector('#gs'),label=box.querySelector('#gl'),liveButton=box.querySelector('#gl2');
-    let selected=n,play=false,live=!!(o.started&&o.status==='printing'),elapsed=G.T,dirty=true;
+    const nozzle=new T.Group(),nozzleMat=new T.MeshStandardMaterial({color:0xb8c0ce,metalness:.65,roughness:.3}),tipMat=new T.MeshStandardMaterial({color:0xffaa35,metalness:.6,roughness:.35});
+    const nozzleSize=Math.max(.7,Math.min(3,span*.025)),bodyGeo=new T.BoxGeometry(nozzleSize*1.5,nozzleSize*1.1,nozzleSize*1.5),tipGeo=new T.ConeGeometry(nozzleSize*.38,nozzleSize*.65,12);
+    const body=new T.Mesh(bodyGeo,nozzleMat),tip=new T.Mesh(tipGeo,tipMat);body.position.y=nozzleSize*1.1;tip.rotation.z=Math.PI;tip.position.y=nozzleSize*.325;nozzle.add(body,tip);scene.add(nozzle);
+    const beadGeo=gLayerGeometry(T,{s:[0,0,0,1,0,0],w:[1],h:1},0,0,0),bead=new T.Mesh(beadGeo,active);scene.add(bead);
+    let selected=n,play=false,live=false,elapsed=G.T,dirty=true;
     function update(){
       if(live||play){selected=1;for(let i=0;i<n;i++)if(G.layers[i].t0<=elapsed)selected=i+1}
+      nozzle.visible=bead.visible=false;
       for(let i=0;i<n;i++){const mesh=meshes[i],L=G.layers[i];mesh.visible=i<selected;mesh.material=i===selected-1?active:normal;let count=L.s.length/6;
-        if((play||live)&&mesh.visible){let lo=0,hi=L.t.length;while(lo<hi){const mid=(lo+hi)>>1;if(L.t[mid]<=elapsed)lo=mid+1;else hi=mid}count=lo}mesh.geometry.setDrawRange(0,count*60)}
-      slider.value=selected;gp.textContent=play?'❚❚':'▶';const rem=Math.max(0,Math.ceil((G.T-elapsed)/60));label.textContent=a('layer')+' '+selected+' / '+n+' · '+a('left')+' '+(rem?fmt(rem):'<1 '+(lang==='ru'?'мин':'хв'));
+        if((play||live)&&mesh.visible){count=gSegmentAt(L,elapsed).index}mesh.geometry.setDrawRange(0,count*60)}
+      if(play||live){const L=G.layers[selected-1],cursor=gSegmentAt(L,elapsed),j=cursor.index*6;
+        if(j<L.s.length){const u=cursor.fraction,x=L.s[j]+(L.s[j+3]-L.s[j])*u,y=L.s[j+1]+(L.s[j+4]-L.s[j+1])*u,z=L.s[j+2]+(L.s[j+5]-L.s[j+2])*u;
+          nozzle.position.set(x-cx,z-base,-(y-cy));nozzle.visible=elapsed>=L.ts[cursor.index];
+          bead.position.set(L.s[j]-cx,L.s[j+2]-base,-(L.s[j+1]-cy));bead.rotation.y=Math.atan2(y-L.s[j+1],x-L.s[j]);bead.scale.set(Math.hypot(x-L.s[j],y-L.s[j+1]),L.h,L.w[cursor.index]);bead.visible=nozzle.visible&&u>0;
+        }
+      }
+      if(play||live){const position=gMotionAt(G.moves,elapsed);if(position){nozzle.position.set(position[0]-cx,position[2]-base,-(position[1]-cy));nozzle.visible=elapsed<G.T}}
+      slider.value=selected;slider.disabled=live;gp.disabled=live;gp.textContent=play?'❚❚':'▶';liveButton.classList.toggle('on',live);box.querySelector('#gm').classList.toggle('on',!live);
+      const progress=G.T?Math.min(1,elapsed/G.T):1,rem=Math.max(0,Math.ceil((G.T-elapsed)/60));box.querySelector('.g-progress i').style.width=(progress*100)+'%';
+      label.textContent=a('layer')+' '+selected+' / '+n+' · '+Math.round(progress*100)+'% · '+(elapsed>=G.T?a('ready'):a('left')+' '+fmt(rem));
     }
     slider.oninput=()=>{selected=+slider.value;live=false;play=false;elapsed=G.layers[selected-1].t1;dirty=true};
     gp.onclick=()=>{live=false;if(!play&&elapsed>=G.T)elapsed=0;play=!play;dirty=true};
-    if(liveButton)liveButton.onclick=()=>{live=true;play=false;dirty=true};
+    liveButton.onclick=()=>{if(!o.started)return;live=true;play=false;dirty=true};
+    box.querySelector('#gm').onclick=()=>{live=false;play=false;dirty=true};
     box.querySelector('#gf').onclick=()=>{selected=n;elapsed=G.T;play=live=false;fit();dirty=true};
     let last=performance.now(),disposed=false;
-    function dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();plateGeo.dispose();plateMat.dispose();grid.geometry.dispose();(Array.isArray(grid.material)?grid.material:[grid.material]).forEach(m=>m.dispose());renderer.dispose()}
-    function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}if(dirty){update();dirty=false}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
+    function dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();bodyGeo.dispose();tipGeo.dispose();nozzleMat.dispose();tipMat.dispose();beadGeo.dispose();plateGeo.dispose();plateMat.dispose();grid.geometry.dispose();(Array.isArray(grid.material)?grid.material:[grid.material]).forEach(m=>m.dispose());renderer.dispose()}
+    function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=["ready","shipping","delivered"].includes(o.status)?G.T:Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}if(dirty){update();dirty=false}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
   }catch(e){console.error('G-code 3D',e);if(box.isConnected)box.innerHTML='<p class="mut">'+a('err')+'</p>'}
 }
 function openOrder(id){
@@ -590,8 +625,8 @@ async function onChange(e){
   if(c==="ci"){t.parentNode.classList.toggle("on",!!t.files[0]);return}
   if(c==="cl"){fcl=t.value;return render()}
   run(async()=>{
-    if(c==="st")await sb.from("orders").update({status:t.value,...(t.value==="printing"?{print_started_at:new Date().toISOString()}:{})}).eq("id",t.dataset.id);
-    if(c==="gc"&&t.files[0]){await sb.from("orders").update({gcode:await up(t.files[0],"gcode")}).eq("id",t.dataset.id);await render()}
+    if(c==="st"){const {error}=await sb.from("orders").update({status:t.value}).eq("id",t.dataset.id);if(error)throw error;await render()}
+    if(c==="gc"&&t.files[0]){const {error}=await sb.from("orders").update({gcode:await up(t.files[0],"gcode")}).eq("id",t.dataset.id);if(error)throw error;await render()}
     if(c==="av"&&t.files[0]){const u=await up(t.files[0],"avatars");await sb.from("profiles").update({avatar:u}).eq("id",user.id);me.avatar=u;await render()}
   });
 }
