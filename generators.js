@@ -37,26 +37,32 @@ function tray(p){
  for(let i=start;i<Math.min(start+p.columns,p.items.length);i++){const s=specs[i],w=s.width+2*p.clearance,d=s.depth+2*p.clearance,outerW=w+2*p.wall+2,outerD=d+2*p.wall+2;
  cells.push({type:p.items[i],x:ox,y:depth,w,d,outerW,outerD,round:s.round,height:p.bottom+Math.min(s.height*.45,22),itemHeight:s.height});ox+=outerW;rowDepth=Math.max(rowDepth,outerD)}width=Math.max(width,ox);depth+=rowDepth;
  }
+ // Leave a separate perimeter wall around the underside cavity.
+ const margin=p.wall;cells.forEach(c=>{c.x+=margin;c.y+=margin});width+=2*margin;depth+=2*margin;
  const vertices=[],triangles=[],ids=new Map();
  const vertex=(x,y,z)=>{const q=[x,y,z].map(v=>+v.toFixed(7)),key=q.join(',');if(!ids.has(key)){ids.set(key,vertices.length/3);vertices.push(...q)}return ids.get(key)};
  const tri=(a,b,c)=>triangles.push(a,b,c),quad=(a,b,c,d)=>{tri(a,b,c);tri(a,c,d)};
  const rectangle=(x,y,w,d)=>[[x,y],[x+w,y],[x+w,y+d],[x,y+d]];
  const circle=(x,y,r)=>Array.from({length:64},(_,i)=>[x+r*Math.cos(i*Math.PI/32),y+r*Math.sin(i*Math.PI/32)]);
  const height=p.bodyHeight??22;if(!Number.isFinite(height)||height<6||height>35||height<=p.bottom)throw Error('Висота корпусу: від 6 до 35 мм.');
- const corner=Math.min(4,width/8,depth/8),outer=[];
- for(const [cx,cy,angle] of [[width-corner,corner,-90],[width-corner,depth-corner,0],[corner,depth-corner,90],[corner,corner,180]])for(let i=0;i<=8;i++){const a=(angle+i*90/8)*Math.PI/180;outer.push([cx+corner*Math.cos(a),cy+corner*Math.sin(a)])}
- const loops=cells.map(c=>{const cx=c.x+c.outerW/2,cy=c.y+c.outerD/2,r=c.w/2/Math.cos(Math.PI/64);c.floor=height-Math.min(c.itemHeight*.45,height-p.bottom);c.height=height;
- return {inner:c.round?circle(cx,cy,r):rectangle(cx-c.w/2,cy-c.d/2,c.w,c.d)};});
- const flat=outer.flat(),holes=[];for(const l of loops){holes.push(flat.length/2);flat.push(...l.inner.flat())}const faces=earcut(flat,holes,2),top=[];for(let i=0;i<flat.length;i+=2)top.push(vertex(flat[i],flat[i+1],height));// Earcut can bridge collinear holes with a long edge; split at every boundary vertex.
+ const corner=Math.min(4,width/4,depth/4),underside=height-p.wall;
+ function rounded(inset){const r=corner-inset,result=[];for(const [cx,cy,angle] of [[width-corner,corner,-90],[width-corner,depth-corner,0],[corner,depth-corner,90],[corner,corner,180]])for(let i=0;i<=8;i++){const a=(angle+i*90/8)*Math.PI/180;result.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}return result}
+ const outer=rounded(0),inside=rounded(p.wall);
+ const loops=cells.map(c=>{const cx=c.x+c.outerW/2,cy=c.y+c.outerD/2,r=c.w/2/Math.cos(Math.PI/64);c.floor=height-Math.min(Math.max(c.itemHeight*.45,p.wall+.2),height-p.bottom);c.height=height;
+ return {inner:c.round?circle(cx,cy,r):rectangle(cx-c.w/2,cy-c.d/2,c.w,c.d),outer:c.round?circle(cx,cy,r+p.wall):rectangle(cx-c.w/2-p.wall,cy-c.d/2-p.wall,c.w+2*p.wall,c.d+2*p.wall)};});
+ function plane(boundary,cutouts,z,down=false){const flat=boundary.flat(),holes=[];for(const l of cutouts){holes.push(flat.length/2);flat.push(...l.flat())}const faces=earcut(flat,holes,2),points=[];for(let i=0;i<flat.length;i+=2)points.push(vertex(flat[i],flat[i+1],z));
+ // Split Earcut's collinear bridges to preserve shared boundary edges.
  const planar=(a,b,c)=>{if(Math.abs((vertices[b*3]-vertices[a*3])*(vertices[c*3+1]-vertices[a*3+1])-(vertices[b*3+1]-vertices[a*3+1])*(vertices[c*3]-vertices[a*3]))<1e-9)return;const q=[a,b,c];for(let j=0;j<3;j++){const u=q[j],v=q[(j+1)%3],apex=q[(j+2)%3],dx=vertices[v*3]-vertices[u*3],dy=vertices[v*3+1]-vertices[u*3+1],len=dx*dx+dy*dy;
- const mids=top.filter(k=>k!==u&&k!==v).map(k=>({k,t:((vertices[k*3]-vertices[u*3])*dx+(vertices[k*3+1]-vertices[u*3+1])*dy)/len,cross:(vertices[k*3]-vertices[u*3])*dy-(vertices[k*3+1]-vertices[u*3+1])*dx})).filter(q=>q.t>1e-7&&q.t<1-1e-7&&Math.abs(q.cross)<1e-6).sort((a,b)=>a.t-b.t);
- if(mids.length){const chain=[u,...mids.map(q=>q.k),v];for(let i=0;i<chain.length-1;i++)planar(chain[i],chain[i+1],apex);return}}tri(a,b,c)};
- for(let i=0;i<faces.length;i+=3)planar(top[faces[i]],top[faces[i+1]],top[faces[i+2]]);
- const b=outer.map(q=>vertex(...q,0)),t=outer.map(q=>vertex(...q,height)),bottomFaces=earcut(outer.flat(),null,2);for(let i=0;i<bottomFaces.length;i+=3)tri(b[bottomFaces[i]],b[bottomFaces[i+2]],b[bottomFaces[i+1]]);
- for(let i=0;i<outer.length;i++){const j=(i+1)%outer.length;quad(b[i],b[j],t[j],t[i])}
- loops.forEach((l,k)=>{const ib=l.inner.map(q=>vertex(...q,cells[k].floor)),it=l.inner.map(q=>vertex(...q,height)),floor=earcut(l.inner.flat(),null,2);
- for(let i=0;i<floor.length;i+=3)tri(ib[floor[i]],ib[floor[i+1]],ib[floor[i+2]]);
- for(let i=0;i<ib.length;i++){const j=(i+1)%ib.length;quad(ib[i],it[i],it[j],ib[j])}});
+ const mids=points.filter(k=>k!==u&&k!==v).map(k=>({k,t:((vertices[k*3]-vertices[u*3])*dx+(vertices[k*3+1]-vertices[u*3+1])*dy)/len,cross:(vertices[k*3]-vertices[u*3])*dy-(vertices[k*3+1]-vertices[u*3+1])*dx})).filter(q=>q.t>1e-7&&q.t<1-1e-7&&Math.abs(q.cross)<1e-6).sort((a,b)=>a.t-b.t);
+ if(mids.length){const chain=[u,...mids.map(q=>q.k),v];for(let i=0;i<chain.length-1;i++)planar(chain[i],chain[i+1],apex);return}}if(down)tri(a,c,b);else tri(a,b,c)};
+ for(let i=0;i<faces.length;i+=3)planar(points[faces[i]],points[faces[i+1]],points[faces[i+2]]);}
+ function wall(loop,low,high,inward=false){if(high-low<1e-7)return;const a=loop.map(q=>vertex(...q,low)),b=loop.map(q=>vertex(...q,high));for(let i=0;i<a.length;i++){const j=(i+1)%a.length;if(inward)quad(a[i],b[i],b[j],a[j]);else quad(a[i],a[j],b[j],b[i])}}
+ function ring(outer,inner,z,down=false){const a=outer.map(q=>vertex(...q,z)),b=inner.map(q=>vertex(...q,z));for(let i=0;i<a.length;i++){const j=(i+1)%a.length;if(down)quad(a[i],b[i],b[j],a[j]);else quad(a[i],a[j],b[j],b[i])}}
+ plane(outer,loops.map(l=>l.inner),height);
+ plane(inside,loops.map(l=>l.outer),underside,true);
+ wall(outer,0,height);wall(inside,0,underside,true);ring(outer,inside,0,true);
+ loops.forEach((l,k)=>{const floor=cells[k].floor,below=Math.max(0,floor-p.bottom);wall(l.outer,0,underside);wall(l.inner,floor,height,true);plane(l.inner,[],floor);
+ if(below<1e-7)plane(l.outer,[],0,true);else{ring(l.outer,l.inner,0,true);wall(l.inner,0,below,true);plane(l.inner,[],below,true)}});
  const model={vertices,triangles,parameters:{width,depth,height},cells};
  if(p.lid){const gap=p.lidClearance??.25;if(!Number.isFinite(gap)||gap<.1||gap>1)throw Error('Зазор кришки: 0,1–1 мм на бік.');
  const w=width+2*gap+2*p.wall,d=depth+2*gap+2*p.wall,h=Math.max(...cells.map(c=>c.floor+c.itemHeight))+gap+p.bottom;
@@ -87,5 +93,6 @@ function vase(p){
  for(let j=0;j<count;j++){const k=(j+1)%count;triangles.push(bottom,outer[0][k],outer[0][j],floor,inner[0][j],inner[0][k]);quad(outer.at(-1)[j],outer.at(-1)[k],inner.at(-1)[k],inner.at(-1)[j])}
  const xs=vertices.filter((_,i)=>i%3===0),ys=vertices.filter((_,i)=>i%3===1);return {vertices,triangles,parameters:{width:Math.max(...xs)-Math.min(...xs),depth:Math.max(...ys)-Math.min(...ys),height:p.height},centered:true};
 }
-const api={PRESETS,tray,vase};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Print3DGenerators=api;
+function printTray(model){const p=model.parameters;return {vertices:model.vertices.map((v,i)=>i%3===1?p.depth-v:i%3===2?p.height-v:v),triangles:model.triangles,parameters:p}}
+const api={PRESETS,tray,vase,printTray};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Print3DGenerators=api;
 })(typeof window!=='undefined'?window:this);
