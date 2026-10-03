@@ -1,0 +1,3 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),B=require('../background-layout.js');
+test('complete forms fit phone, tablet and long page layouts',()=>{for(const [w,h] of [[390,844],[1024,768],[1366,1024],[1440,6000]]){const a=B.layout(w,h);assert.ok(a.length>0);assert.equal(new Set(a.map(p=>p.id)).size,a.length);for(const p of a){assert.ok(p.x>=0&&p.x+p.w<=w);assert.ok(p.y>=0&&p.y+p.h<h);assert.ok(p.duration>=10&&p.duration<=16)}}});
+test('extending a page preserves existing form positions and adds varied forms',()=>{const a=B.layout(1024,900),b=B.layout(1024,3000);for(const p of a)assert.deepEqual(b.find(q=>q.id===p.id),p);assert.ok(b.length>a.length);assert.ok(new Set(b.map(p=>p.kind)).size>=4);assert.ok(new Set(b.map(p=>p.angle)).size>8)});
