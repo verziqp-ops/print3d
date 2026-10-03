@@ -35,7 +35,7 @@ body{
 .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px}
 .logo svg{width:26px;height:26px;color:var(--accent)}
 .lang{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
-.lang button{border:0;background:none;color:var(--muted);font:600 13px inherit;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.25s}
+.lang button{border:0;background:none;color:var(--muted);font:600 13px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.25s}
 .lang button.on{background:var(--accent);color:#2a1303}
 .card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:26px 22px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:rise .6s cubic-bezier(.2,.9,.3,1)}
 @keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}}
@@ -47,7 +47,7 @@ label.f span{display:block;font-size:12px;color:var(--muted);margin:0 0 5px 4px}
 .inp{position:relative}
 input[type=text],input[type=email],input[type=password]{
   width:100%;padding:13px 14px;border-radius:16px;border:1px solid var(--line);
-  background:var(--field);color:var(--text);font:16px inherit;outline:0;transition:.2s}
+  background:var(--field);color:var(--text);font:16px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;outline:0;transition:.2s}
 input:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
 input.bad{border-color:#d93b3b}
 .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);padding:8px;cursor:pointer}
@@ -59,12 +59,12 @@ input.bad{border-color:#d93b3b}
 .chk input:checked+.box{background:var(--accent);border-color:var(--accent);transform:scale(1.08)}
 .chk input:checked+.box svg{opacity:1;transform:none}
 .chk input:focus-visible+.box{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
-.link{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.link{background:none;border:0;padding:0;color:var(--accent);font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-decoration:underline;cursor:pointer}
 .err{color:#d93b3b;font-size:13px;min-height:18px;margin:0 0 8px 4px}
 /* fog button */
 .btn{position:relative;isolation:isolate;overflow:hidden;width:100%;cursor:pointer;
   border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:15px 24px;
-  font:700 16px inherit;color:#2a1303;background:rgba(255,160,70,.3);
+  font:700 16px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#2a1303;background:rgba(255,160,70,.3);
   backdrop-filter:blur(14px) saturate(1.5);-webkit-backdrop-filter:blur(14px) saturate(1.5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 10px 26px -10px rgba(240,110,20,.6);
   transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,opacity .3s}
@@ -88,7 +88,7 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
 .btn.g svg{width:20px;height:20px;vertical-align:middle;margin-right:8px}
 .or{text-align:center;color:var(--muted);font-size:13px;margin:10px 0}
 .note{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 0}
-.logout{background:none;border:0;padding:6px 8px;color:var(--muted);font:600 13px inherit;cursor:pointer;transition:color .3s,transform .5s cubic-bezier(.34,1.56,.64,1)}
+.logout{background:none;border:0;padding:6px 8px;color:var(--muted);font:600 13px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;cursor:pointer;transition:color .3s,transform .5s cubic-bezier(.34,1.56,.64,1)}
 .logout:hover{color:#e5484d;transform:scale(1.1)}
 .logout:active{transform:scale(.92)}
 .right{display:flex;align-items:center;gap:8px}
