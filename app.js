@@ -57,6 +57,7 @@ body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8
 .bk::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at calc(100% - var(--lx,30%)) calc(100% - var(--ly,24%)),rgba(255,133,45,.3),transparent 49%)}
 #bg-filament{position:absolute;inset:-5%;width:110%;height:110%;opacity:.1;animation:bf 65s ease-in-out infinite alternate}
 #bg-spot{position:absolute;left:-220px;top:-220px;width:440px;height:440px;background:radial-gradient(circle,rgba(255,138,31,.065),transparent 67%);transform:translate3d(var(--px,50vw),var(--py,35vh),0);transition:transform 1.1s cubic-bezier(.2,.7,.3,1);will-change:transform}
+#bubble-scene{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}#bubbles.webgl-ready .bub,#bubbles.webgl-ready #bg-filament{display:none}
 #bubbles.bg-paused .bub,#bubbles.bg-paused .bub::after,#bubbles.bg-paused #bg-filament{animation-play-state:paused}
 @media(max-width:760px){#bubbles::before{background-size:56px 56px;opacity:.22}#bg-filament{opacity:.07}.bub{opacity:.85}}
 @media(hover:none),(pointer:coarse){#bg-spot{display:none}}
@@ -780,8 +781,9 @@ const FILAMENT='<svg id="bg-filament" viewBox="0 0 1440 1000" preserveAspectRati
 function initBackground(){
  if(bub)return;document.body.classList.add('bg-ready');
     bub=document.createElement("div");bub.id="bubbles";bub.setAttribute('aria-hidden','true');bub.innerHTML=FILAMENT+BUBS.map(([x,y,z,c,d,b,lx,ly],i)=>`<i class="bub ${c}" style="left:${x}%;top:${y}%;width:min(${z}px,55vw);height:min(${z}px,55vw);animation-duration:${d}s;animation-delay:-${i*7}s;--lx:${lx}%;--ly:${ly}%;--sx:${(50-lx)*.65}px;--sy:${(50-ly)*.65}px;--dx:${i%2?-36:30}px;--dy:${-24-i%4*11}px;--turn:${i%2?-9:7}deg;--shine-angle:${lx>50?32:-32}deg;--shine-time:${16+i%5*3}s;--phase:-${i*3}s;${b?"filter:blur("+b+"px);":""}"></i>`).join("");document.body.appendChild(bub);bub.classList.toggle('bg-paused',document.hidden);
+    window.Print3DBackground?.mount(bub);
     const motion=matchMedia('(prefers-reduced-motion:reduce)'),finePointer=matchMedia('(hover:hover) and (pointer:fine)');let bgFrame=0,bgX=0,bgY=0;
-    document.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||motion.matches||!finePointer.matches)return;bgX=e.clientX;bgY=e.clientY;if(!bgFrame)bgFrame=requestAnimationFrame(()=>{bgFrame=0;bub.style.setProperty('--px',bgX+'px');bub.style.setProperty('--py',bgY+'px')})},{passive:true});
+    document.addEventListener('pointermove',e=>{if(bub.classList.contains('webgl-ready')||e.pointerType!=='mouse'||motion.matches||!finePointer.matches)return;bgX=e.clientX;bgY=e.clientY;if(!bgFrame)bgFrame=requestAnimationFrame(()=>{bgFrame=0;bub.style.setProperty('--px',bgX+'px');bub.style.setProperty('--py',bgY+'px')})},{passive:true});
     document.addEventListener('visibilitychange',()=>{bub.classList.toggle('bg-paused',document.hidden)});
 
 }
