@@ -45,16 +45,17 @@ css.textContent=`
 body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.58);--line:rgba(255,255,255,.1);--field:rgba(255,255,255,.07);--accent:#ff8a1f;display:block;padding:0;background:#080605;color:var(--text)}
 .app-on .blob,.bg-ready .blob{display:none}.app-on .wrap{max-width:1200px!important;margin:0 auto!important;padding:0 16px}
 body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.78);--line:rgba(255,255,255,.1);--field:#19120d;--accent:#ff8a1f;background:#080605}
-#bubbles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#000}
-.bg-parallax{position:absolute;inset:-3%;transform:translate3d(var(--bg-x,0px),var(--bg-y,0px),0);transition:transform 1.4s cubic-bezier(.2,.65,.3,1);will-change:transform}
-.bg-art{position:absolute;inset:-2%;animation:matteDrift 14s ease-in-out infinite alternate;will-change:transform}
-#bubbles::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,.22) 100%)}
-@keyframes matteDrift{0%{transform:translate3d(-1%,-.7%,0) scale(1.015) rotate(-.35deg)}50%{transform:translate3d(1.2%,.8%,0) scale(1.03) rotate(.1deg)}100%{transform:translate3d(-.8%,1.1%,0) scale(1.02) rotate(.4deg)}}
-.bg-art svg{display:block;width:100%;height:100%;filter:contrast(1.06)}.matte-piece{animation:matteFloat var(--float-time,9s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s);will-change:transform}
-@keyframes matteFloat{from{transform:translate(var(--float-x,-12px),-15px)}to{transform:translate(calc(var(--float-x,-12px) * -1),18px)}}
-#bubbles.bg-paused .bg-art,#bubbles.bg-paused .matte-piece{animation-play-state:paused}
-@media(max-width:760px){.bg-art{background-position:48% center}.bg-parallax{transition-duration:1.8s}}
-@media(prefers-reduced-motion:reduce){.bg-art,.matte-piece{animation:none;will-change:auto}.bg-parallax{transform:none;transition:none;will-change:auto}}
+body.bg-ready{position:relative;min-height:100svh}
+#bubbles{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#000}
+.bg-stack{position:absolute;inset:0;overflow:hidden;contain:paint}
+.bg-tile{position:absolute;left:0;width:100%;mask-image:linear-gradient(to bottom,transparent,black 10%,black 88%,transparent);-webkit-mask-image:linear-gradient(to bottom,transparent,black 10%,black 88%,transparent)}
+.bg-tile:first-child{mask-image:linear-gradient(to bottom,black,black 88%,transparent);-webkit-mask-image:linear-gradient(to bottom,black,black 88%,transparent)}
+.bg-art{position:absolute;inset:0}.bg-tile:nth-child(even) .bg-art{transform:scaleX(-1)}
+.bg-art svg{display:block;width:100%;height:100%;filter:contrast(1.06)}
+.matte-piece{animation:matteFloat var(--float-time,18s) ease-in-out infinite alternate;animation-delay:var(--float-delay,0s)}
+@keyframes matteFloat{from{transform:translate(var(--float-x,-4px),-5px)}to{transform:translate(calc(var(--float-x,-4px) * -1),6px)}}
+#bubbles.bg-paused .matte-piece,.bg-tile.tile-away .matte-piece{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.matte-piece{animation:none}}
 @keyframes fl{to{transform:translateY(-14px)}}
 .glass,.card2{background:var(--card);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
@@ -775,18 +776,27 @@ function initBackground(){
  bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');const pieces=[[615,231,64,68],[529,369,49,48],[838,121,36,36],[803,423,218,158],[1168,485,116,150],[1457,348,42,43],[857,868,45,45],[1608,436,67,71]];
  const asset='assets/matte-background-hq.webp?v=20261003-alive18';
  const region=(p,extra=0)=>{const [x,y,rx,ry]=p;if(x===1168)return `<ellipse cx="1208" cy="402" rx="${60+extra}" ry="${59+extra}"/><ellipse cx="1168" cy="516" rx="${106+extra}" ry="${100+extra}"/>`;return `<ellipse cx="${x}" cy="${y}" rx="${rx+extra}" ry="${ry+extra}"/>`};
- const defs=pieces.map((p,i)=>`<clipPath id="matte-clip-${i}">${region(p)}</clipPath>`).join('');
+ const makeTile=index=>{const key='matte-'+index;
+ const defs=pieces.map((p,i)=>`<clipPath id="${key}-clip-${i}">${region(p)}</clipPath>`).join('');
  const holes=pieces.map(p=>`<g fill="black">${region(p,4)}</g>`).join('');
- const floats=pieces.map((_,i)=>`<g class="matte-piece" style="--float-time:${7+i%4*1.5}s;--float-delay:-${i*1.7}s;--float-x:${i%2?10:-12}px"><g clip-path="url(#matte-clip-${i})"><image href="${asset}" width="1672" height="941"/></g></g>`).join('');
- bub.innerHTML=`<div class="bg-parallax"><div class="bg-art"><svg viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>${defs}<mask id="matte-base" maskUnits="userSpaceOnUse" x="0" y="0" width="1672" height="941"><rect width="1672" height="941" fill="white"/>${holes}</mask></defs><image href="${asset}" width="1672" height="941" mask="url(#matte-base)"/>${floats}</svg></div></div>`;document.body.appendChild(bub);
- const motion=matchMedia('(prefers-reduced-motion:reduce)'),fine=matchMedia('(hover:hover) and (pointer:fine)');let frame=0,x=0,y=0;
- const paint=()=>{frame=0;bub.style.setProperty('--bg-x',x+'px');bub.style.setProperty('--bg-y',y+'px')};
- const queue=()=>{if(!frame)frame=requestAnimationFrame(paint)};
- document.addEventListener('pointermove',e=>{if(motion.matches||!fine.matches||e.pointerType!=='mouse')return;x=(e.clientX/innerWidth-.5)*-24;y=(e.clientY/innerHeight-.5)*-18;queue()},{passive:true});
- document.addEventListener('pointerout',e=>{if(!e.relatedTarget){x=0;y=0;queue()}},{passive:true});
- window.addEventListener('scroll',()=>{if(motion.matches||fine.matches)return;x=0;y=-Math.tanh(scrollY/600)*16;queue()},{passive:true});
- const visibility=()=>{bub.classList.toggle('bg-paused',document.hidden)};document.addEventListener('visibilitychange',visibility);visibility();
- motion.addEventListener('change',()=>{if(motion.matches){x=0;y=0;queue()}});
+ const floats=pieces.map((_,i)=>`<g class="matte-piece" style="--float-time:${16+i%4*2}s;--float-delay:-${i*2.3+index*3}s;--float-x:${i%2?3:-4}px"><g clip-path="url(#${key}-clip-${i})"><image href="${asset}" width="1672" height="941"/></g></g>`).join('');
+ const tile=document.createElement('div');tile.className='bg-tile tile-away';tile.innerHTML=`<div class="bg-art"><svg viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>${defs}<mask id="${key}-base" maskUnits="userSpaceOnUse" x="0" y="0" width="1672" height="941"><rect width="1672" height="941" fill="white"/>${holes}</mask></defs><image href="${asset}" width="1672" height="941" mask="url(#${key}-base)"/>${floats}</svg></div>`;return tile};
+ const stack=document.createElement('div');stack.className='bg-stack';bub.appendChild(stack);document.body.appendChild(bub);
+ const visible=new IntersectionObserver(entries=>entries.forEach(e=>e.target.classList.toggle('tile-away',!e.isIntersecting)),{rootMargin:'80px'});
+ let layoutFrame=0,lastWidth=0,tileHeight=0;
+ const fit=()=>{layoutFrame=0;const width=document.documentElement.clientWidth;
+ // Stable tile height avoids rescaling the artwork when tablet browser bars move.
+ if(width!==lastWidth||!tileHeight){lastWidth=width;tileHeight=Math.max(document.documentElement.clientHeight,width*941/1672)}
+ const height=bub.clientHeight,step=tileHeight*.88,count=Math.max(1,Math.ceil(height/step));
+ while(stack.children.length<count){const tile=makeTile(stack.children.length);stack.appendChild(tile);visible.observe(tile)}
+ while(stack.children.length>count){visible.unobserve(stack.lastElementChild);stack.lastElementChild.remove()}
+ Array.from(stack.children).forEach((tile,i)=>{tile.style.height=tileHeight+'px';tile.style.top=i*step+'px'});
+ };
+ const queueFit=()=>{if(!layoutFrame)layoutFrame=requestAnimationFrame(fit)};
+ const observer=new ResizeObserver(queueFit);observer.observe(document.body);observer.observe(bub);window.addEventListener('resize',queueFit,{passive:true});fit();
+ const visibility=()=>bub.classList.toggle('bg-paused',document.hidden);document.addEventListener('visibilitychange',visibility);visibility();
+ window.addEventListener('pagehide',e=>{if(!e.persisted){observer.disconnect();visible.disconnect();cancelAnimationFrame(layoutFrame);window.removeEventListener('resize',queueFit);document.removeEventListener('visibilitychange',visibility)}});
+
 }
 window.openApp=async()=>{
   CARDS.forEach(x=>$(x).classList.add("hide"));
