@@ -20,7 +20,7 @@ add:["Додати","Добавить"],del:["Видалити","Удалить"
 plastics:["Пластик","Пластик"],title:["Назва","Название"],descr:["Опис","Описание"],err:["Помилка, спробуйте ще раз","Ошибка, попробуйте ещё раз"],
 price:["Ціна, грн","Цена, грн"],mins:["Час друку, хв","Время печати, мин"],grams:["Пластик, г","Пластик, г"],addCart:["В кошик","В корзину"],
 orderThis:["Замовити окремо","Заказать отдельно"],total:["Разом","Итого"],checkout:["Оформити замовлення","Оформить заказ"],
-cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Переглянути друк по шарах","Посмотреть печать по слоям"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["live","live"],process:["Процес","Процесс"],simulation:["Розрахункова симуляція · час від початку друку","Расчётная симуляция · время от начала печати"],noStart:["Режим live почнеться зі статусу «Друкується»","Режим live начнётся со статуса «Печатается»"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
+cartEmpty:["Кошик порожній","Корзина пуста"],edit:["Змінити","Изменить"],cancel:["Скасувати","Отмена"],chat:["Чат","Чат"],writeMsg:["Напишіть повідомлення…","Напишите сообщение…"],sendMsg:["Надіслати","Отправить"],noThreads:["Повідомлень ще немає","Сообщений пока нет"],backChats:["← Усі чати","← Все чаты"],photoT:["Фото","Фото"],load3d:["Завантаження 3D…","Загрузка 3D…"],err3d:["3D недоступне, дивіться фото","3D недоступно, смотрите фото"],big:["Файл завеликий (макс. ~45 МБ). Зменшіть модель.","Файл слишком большой (макс. ~45 МБ). Уменьшите модель."],pick:["Оберіть людину зі списку","Выберите человека из списка"],layers:["Подивитись процес друку","Посмотреть процесс печати"],video:["Відео 360° (mp4, за бажанням)","Видео 360° (mp4, по желанию)"],live:["live","live"],process:["Процес","Процесс"],simulation:["Розрахункова симуляція · час від початку друку","Расчётная симуляция · время от начала печати"],noStart:["Режим live почнеться зі статусу «Друкується»","Режим live начнётся со статуса «Печатается»"],layer:["Шар","Слой"],left:["залишилось ≈","осталось ≈"],stockHint:["Підсвічені кольори є в наявності й показуються клієнтам","Подсвеченные цвета есть в наличии и видны клиентам"]};
 const a=k=>(S[k]||[k,k])[lang==="ru"?1:0];
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ST=["pending","printing","ready","shipping","delivered"];
@@ -57,7 +57,7 @@ body.bg-ready{position:relative;min-height:100svh}
 @keyframes fl{to{transform:translateY(-14px)}}
 .glass,.card2{background:var(--card);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--line);border-radius:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 #app{position:relative;z-index:1;padding-bottom:110px}#app.hide{display:none}
-.card2{padding:18px;margin-bottom:12px}
+.card2{padding:18px;margin-bottom:12px}.print-process{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;white-space:normal;text-align:center;padding:12px 20px}
 .hdr{position:sticky;top:12px;z-index:10;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;margin:12px 0 22px;border-radius:999px}
 .hdr{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .5s ease;will-change:transform}.hdr.scroll-hidden{transform:translate3d(0,calc(-100% - 24px),0);opacity:0;pointer-events:none}
 .hdr .logo{cursor:pointer}.hdr nav{display:flex;gap:2px;flex:1}.ico{display:flex;align-items:center;gap:8px;margin-left:auto}
@@ -246,7 +246,8 @@ function orderItem(o,adm,names){
   return `<div class="card2 oi"><div data-a="oopen" data-id="${o.id}" style="cursor:pointer">${o.image?`<img src="${esc(o.image)}">`:""}<b>${esc(o.title)}</b> ${badge(o.status)}
   ${adm?`<p class="mut">${a("client")}: ${esc(names[o.user_id]||"")}</p>`:""}
   <p class="mut">${esc(o.plastic||"")} ${esc(o.color||"")} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
-  ${canViewPrint(o,adm)?`<p class="mut" style="color:var(--accent)">▶ ${a("layers")}</p>`:""}</div>
+  </div>
+  ${canViewPrint(o,adm)?`<div class="rw"><button type="button" class="btn print-process" data-a="oopen" data-id="${o.id}"><span aria-hidden="true">▶</span> ${a("layers")}</button></div>`:""}
   ${o.descr?`<p>${esc(o.descr)}</p>`:""}${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}
   ${adm?`<div class="rw"><select data-c="st" data-id="${o.id}">${ST.map(s=>`<option value="${s}" ${s===o.status?"selected":""}>${a(s)}</option>`).join("")}</select></div>
   <div class="rw"><label class="btn ghost" style="cursor:pointer;min-width:0">${a("gcode")}<input type="file" data-c="gc" data-id="${o.id}" hidden></label>${o.gcode?`<a class="link" href="${esc(o.gcode)}" target="_blank">G-code</a>`:""}
