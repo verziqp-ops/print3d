@@ -1,0 +1,5 @@
+Flexi Cutter
+Source supplied by the project owner:
+https://makerworld.com/ru/models/668019-flexi-cutter#profileId-595621
+Original uploaded filename: 铰链切刀.stl
+Stored as gzip-compressed original STL, without geometry changes.

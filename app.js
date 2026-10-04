@@ -385,7 +385,7 @@ async function mountOrganizer(){
 }
 
 let generatorKind='organizer';
-const generatorTabs=()=>`<div class="tabs">${[['organizer','Органайзер'],['tray','Лотки під предмети'],['vase','Вази']].map(([key,name])=>`<button class="chip ${generatorKind===key?'on':''}" data-a="genkind" data-n="${key}">${name}</button>`).join('')}</div>`;
+const generatorTabs=()=>`<div class="tabs">${[['organizer','Органайзер'],['tray','Лотки під предмети'],['vase','Вази'],['flexi','Гнучкі моделі']].map(([key,name])=>`<button class="chip ${generatorKind===key?'on':''}" data-a="genkind" data-n="${key}">${name}</button>`).join('')}</div>`;
 async function admin(){
   let h=tabs([["orders",a("orders")],["calc","Калькулятор"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
   if(asub==="orders"){
@@ -433,17 +433,17 @@ let renderEpoch=0;
 async function render(){
   if(tab==="generators"&&!me.is_admin)tab="home";
   const epoch=++renderEpoch,key=[tab,sub,asub,generatorKind].join(':'),previousNumbers=Print3DMotion.captureNumbers(view);
-  window.Print3DStudio?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
+  window.Print3DStudio?.dispose();window.Print3DFlexiEditor?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
-    else if(tab==="generators")h=generatorTabs()+(generatorKind==='organizer'?organizerHTML():window.Print3DStudio.html(generatorKind));
+    else if(tab==="generators")h=generatorTabs()+(generatorKind==='organizer'?organizerHTML():generatorKind==='flexi'?window.Print3DFlexiEditor.html():window.Print3DStudio.html(generatorKind));
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   if(epoch!==renderEpoch)return;
   view.innerHTML=h;window.Print3DSliders?.enhance(view);if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
-  if(tab==="generators"&&me.is_admin){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
+  if(tab==="generators"&&me.is_admin){if(generatorKind==='organizer')mountOrganizer();else if(generatorKind==='flexi')window.Print3DFlexiEditor.mount(load3);else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
