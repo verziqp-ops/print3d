@@ -38,7 +38,9 @@ function tray(p){
  cells.push({type:p.items[i],x:ox,y:depth,w,d,outerW,outerD,round:s.round,height:p.bottom+Math.min(s.height*.45,22),itemHeight:s.height});ox+=outerW;rowDepth=Math.max(rowDepth,outerD)}width=Math.max(width,ox);depth+=rowDepth;
  }
  // Leave a separate perimeter wall around the underside cavity.
- const margin=p.wall;cells.forEach(c=>{c.x+=margin;c.y+=margin});width+=2*margin;depth+=2*margin;
+ const paddingX=p.paddingX??0,paddingY=p.paddingY??0;
+ if([paddingX,paddingY].some(v=>!Number.isFinite(v)||v<0||v>80))throw Error('Запас біля стінок: від 0 до 80 мм.');
+ const margin=p.wall;cells.forEach(c=>{c.x+=margin+paddingX;c.y+=margin+paddingY});width+=2*(margin+paddingX);depth+=2*(margin+paddingY);
  const vertices=[],triangles=[],ids=new Map();
  const vertex=(x,y,z)=>{const q=[x,y,z].map(v=>+v.toFixed(7)),key=q.join(',');if(!ids.has(key)){ids.set(key,vertices.length/3);vertices.push(...q)}return ids.get(key)};
  const tri=(a,b,c)=>triangles.push(a,b,c),quad=(a,b,c,d)=>{tri(a,b,c);tri(a,c,d)};

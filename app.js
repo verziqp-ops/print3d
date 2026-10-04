@@ -199,13 +199,13 @@ let chatUid=null,chatSig="";
 const seenGet=u=>+localStorage.getItem("seen:"+u)||0;
 const seenSet=(u,id)=>{try{localStorage.setItem("seen:"+u,id)}catch(e){}};
 const msgBody=body=>String(body||'').split(/(https?:\/\/[^\s<>"']+)/g).map((part,i)=>i%2?`<a href="${esc(part)}" target="_blank" rel="noopener noreferrer">${esc(part)}</a>`:esc(part)).join('');
-const msgHTML=m=>`<div class="m ${m.sender_id===user.id?"me":""}">${m.image?`<img src="${esc(m.image)}">`:""}${msgBody(m.body)}<small>${new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></div>`;
+const msgHTML=m=>`<div class="m ${m.sender_id===user.id?"me":""}">${m.image?`<img src="${esc(m.image)}">`:""}${Print3DChat.attachments(m.body)}${msgBody(Print3DChat.decode(m.body).text)}<small>${new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></div>`;
 async function threadHTML(uid){
   const {data}=await sb.from("messages").select("*").eq("user_id",uid).order("id");
   chatSig=String(data&&data.length?data[data.length-1].id:0);
   if(data&&data.length)seenSet(uid,data[data.length-1].id);
   return `<div class="card2 chat glass"><div id="msgs">${(data||[]).map(msgHTML).join("")||`<p class="mut">${a("noThreads")}</p>`}</div>
-  <div class="cin"><label class="ib" style="cursor:pointer">${ic("up")}<input type="file" id="cimg" accept="image/*" data-c="ci" hidden></label><input type="text" id="cin" placeholder="${a("writeMsg")}"><button class="btn" style="min-width:0" data-a="msg">${a("sendMsg")}</button></div></div>`;
+  <div id="chat-quick" class="chat-quick"></div><div id="chat-attachments" class="chat-attachments"></div><p id="chat-file-error" class="err" role="status"></p><div class="cin"><label class="ib" style="cursor:pointer" title="Додати фото" aria-label="Додати фото">📷<input type="file" id="cphoto" accept="image/*" multiple hidden></label><label class="ib" style="cursor:pointer" title="Додати файли" aria-label="Додати файли">${ic("up")}<input type="file" id="cimg" multiple hidden></label><input type="text" id="cin" placeholder="${a("writeMsg")}"><button class="btn" style="min-width:0" data-a="msg">${a("sendMsg")}</button></div></div>`;
 }
 async function adminList(){
   const [m,p]=await Promise.all([sb.from("messages").select("id,user_id,sender_id,body,image").order("id",{ascending:false}).limit(1000),sb.from("profiles").select("id,first_name,last_name,avatar")]);
@@ -213,7 +213,7 @@ async function adminList(){
   const ppl=(p.data||[]).filter(x=>x.id!==user.id).map(x=>({...x,name:((x.first_name||"")+" "+(x.last_name||"")).trim()||"—",m:last.get(x.id)}));
   ppl.sort((u,v)=>(v.m?v.m.id:0)-(u.m?u.m.id:0)||u.name.localeCompare(v.name));
   return ppl.map(x=>{const un=x.m&&x.m.sender_id!==user.id&&x.m.id>seenGet(x.id);
-    return `<div class="pr2 ${chatUid===x.id?"on":""}" data-a="thread" data-id="${x.id}"><span class="av2">${x.avatar?`<img src="${esc(x.avatar)}">`:esc((x.name[0]||"?").toUpperCase())}</span><span class="pn"><b>${esc(x.name)}</b><small>${x.m?esc(x.m.body||"📷"):"&nbsp;"}</small></span>${un?`<i class="dot"></i>`:""}</div>`}).join("")||`<p class="mut">${a("noThreads")}</p>`;
+    return `<div class="pr2 ${chatUid===x.id?"on":""}" data-a="thread" data-id="${x.id}"><span class="av2">${x.avatar?`<img src="${esc(x.avatar)}">`:esc((x.name[0]||"?").toUpperCase())}</span><span class="pn"><b>${esc(x.name)}</b><small>${x.m?esc(Print3DChat.decode(x.m.body).text||Print3DChat.decode(x.m.body).files[0]?.name||"📷"):"&nbsp;"}</small></span>${un?`<i class="dot"></i>`:""}</div>`}).join("")||`<p class="mut">${a("noThreads")}</p>`;
 }
 async function chatView(){
   if(!me.is_admin){chatUid=user.id;return `<h2>${a("chat")}</h2>`+await threadHTML(user.id)}
@@ -262,10 +262,19 @@ function orderForm(p){
   <div class="lb">${a("color")}</div><div class="chips">${D.colors.filter(c=>c.in_stock).map(c=>`<button class="chip" data-a="co" data-n="${esc(c.name)}"><i style="background:${esc(c.hex)}"></i>${esc(c.name)}</button>`).join("")}</div>
   <p class="err" id="o-e"></p><button class="btn blk" data-a="send">${a("send")}</button></div>`;
 }
+const cartKey=x=>JSON.stringify([x.pid,x.plastic,x.color]);
+const removingCart=new Set();
+let cartUndoTimer=null;
+async function removeCartItem(index,button){
+ const item=cart[index];if(!item)return;const key=cartKey(item);if(removingCart.has(key))return;removingCart.add(key);
+ const row=button.closest('.ci');if(row){row.querySelectorAll('button').forEach(b=>b.disabled=true);if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&row.animate){const height=row.getBoundingClientRect().height;try{await row.animate([{height:height+'px',opacity:1,transform:'translateX(0)',paddingTop:'',paddingBottom:''},{height:height+'px',opacity:0,transform:'translateX(35px)',offset:.55},{height:'0px',opacity:0,transform:'translateX(35px)',paddingTop:'0px',paddingBottom:'0px',marginBottom:'0px',borderWidth:'0px'}],{duration:380,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'}).finished}catch(e){}}}
+ const actual=cart.findIndex(x=>cartKey(x)===key);if(actual<0){removingCart.delete(key);return}const [removed]=cart.splice(actual,1);removingCart.delete(key);saveCart();if(tab==='cart')await render();
+ clearTimeout(cartUndoTimer);document.getElementById('cart-undo')?.remove();const toast=document.createElement('div');toast.id='cart-undo';toast.className='cart-undo';toast.setAttribute('role','status');toast.innerHTML=`<span>${esc(removed.title)} видалено</span><button type="button">Скасувати</button>`;document.body.appendChild(toast);toast.querySelector('button').onclick=()=>{const existing=cart.find(x=>cartKey(x)===key);if(existing)existing.qty+=removed.qty;else cart.splice(Math.min(actual,cart.length),0,removed);saveCart();toast.remove();clearTimeout(cartUndoTimer);if(tab==='cart')render()};cartUndoTimer=setTimeout(()=>toast.remove(),10000);
+}
 const cartView=()=>{
   if(!cart.length)return `<h2>${a("cart")}</h2><p class="mut">${a("cartEmpty")}</p>`;
   const tot=cart.reduce((s,x)=>s+(x.price||0)*x.qty,0);
-  return `<h2>${a("cart")}</h2><div style="max-width:620px">`+cart.map((x,i)=>`<div class="card2 ci">${x.image?`<img src="${esc(x.image)}">`:""}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><p class="mut">${esc([x.plastic,x.color].filter(Boolean).join(" · "))}${x.price!=null?" · "+x.price+" грн":""}</p></div><div class="qty"><button data-a="qm" data-id="${i}">−</button><b data-number-key="${esc(JSON.stringify([x.pid,x.plastic,x.color]))}" data-number-value="${x.qty}">${x.qty}</b><button data-a="qp" data-id="${i}">+</button></div></div>`).join("")+
+  return `<h2>${a("cart")}</h2><div style="max-width:620px">`+cart.map((x,i)=>`<div class="card2 ci" data-cart-key="${esc(JSON.stringify([x.pid,x.plastic,x.color]))}">${x.image?`<img src="${esc(x.image)}">`:""}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><p class="mut">${esc([x.plastic,x.color].filter(Boolean).join(" · "))}${x.price!=null?" · "+x.price+" грн":""}</p></div><div class="qty"><button data-a="qm" data-id="${i}">−</button><b data-number-key="${esc(JSON.stringify([x.pid,x.plastic,x.color]))}" data-number-value="${x.qty}">${x.qty}</b><button data-a="qp" data-id="${i}">+</button></div><button class="ib" data-a="cart-remove" data-id="${i}" aria-label="Видалити ${esc(x.title)}" title="Видалити">×</button></div>`).join("")+
     `<div class="card2"><div class="rw"><b style="flex:1">${a("total")}</b><b data-number-key="cart-total" data-number-value="${tot}" data-number-money="true" data-number-suffix=" грн">${tot} грн</b></div><button class="btn blk" data-a="checkout">${a("checkout")}</button></div></div>`;
 };
 async function profile(){
@@ -333,7 +342,7 @@ function organizerHTML(){
   <div class="calc-fields" style="margin-top:16px">${fields.map(([key,label])=>{const count=['rows','columns'].includes(key),min=count?1:['width','depth'].includes(key)?10:key==='height'?5:.8,max=count?12:['width','depth','height'].includes(key)?1000:10,step=count?1:.1;return `<label class="f studio-slider"><span>${label}</span><div><input type="range" data-org="${key}" min="${min}" max="${max}" step="${step}" value="${esc(orgValues[key])}"><input type="number" data-org="${key}" min="${min}" max="${max}" step="${step}" value="${esc(orgValues[key])}"></div></label>`}).join('')}<label class="f"><span>Колір прев’ю</span><input type="color" data-org="color" value="${esc(orgValues.color)}" style="height:44px;width:100%"></label></div>
   <p class="err" id="org-error" role="status"></p><p class="mut" id="org-info"></p><p class="mut" id="org-fit"></p>
   <div class="rw" style="flex-wrap:wrap"><button class="btn" data-a="org-download">Завантажити STL</button><button class="chip" data-a="org-reset">Скинути</button></div><p class="mut">STL — у міліметрах, без кольору. Відкрий його в слайсері, щоб вибрати пластик, якість і отримати G-code.</p></div>
-  <div><div id="org-preview" class="org-preview"><p class="mut">Завантаження 3D…</p></div><p class="gl">Обертай мишею або пальцем · коліщатко для масштабу</p><button class="chip" id="org-camera">Повернути камеру</button></div></section>`;
+  <div><div id="org-preview" class="org-preview"><p class="mut">Завантаження 3D…</p></div><p class="gl">Тягни помаранчеві ручки — змінюй стінки. Обертай модель за вільне місце.</p><button class="chip" id="org-camera">Повернути камеру</button></div></section>`;
 }
 function readOrganizer(){return Object.fromEntries([...document.querySelectorAll('[data-org]')].map(input=>[input.dataset.org,input.dataset.org==='color'?input.value:input.value===''?NaN:Number(input.value)]))}
 function updateOrganizer(){
@@ -367,9 +376,10 @@ async function mountOrganizer(){
     function fit(){const p=orgModel?orgModel.parameters:ORG_DEFAULT,span=Math.max(p.width,p.depth,p.height),aspect=Math.max(.3,host.clientWidth/host.clientHeight),distance=span*1.9/Math.min(1,aspect);camera.position.set(distance*.72,p.height+distance*.75,distance*.95);controls.target.set(0,p.height*.4,0);controls.update()}
     function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
     const observer=new ResizeObserver(resize);observer.observe(host);resize();
-    const viewer={fit,clear(){mesh.visible=false},update(model,color){const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(Float32Array.from(model.vertices),3));geometry.setIndex(model.triangles);const flat=geometry.toNonIndexed();geometry.dispose();flat.translate(-model.parameters.width/2,-model.parameters.depth/2,0);flat.rotateX(-Math.PI/2);flat.computeVertexNormals();mesh.geometry.dispose();mesh.geometry=flat;mesh.visible=true;Print3DMotion.color(material,color);if(first){first=false;fit()}},dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();mesh.geometry.dispose();Print3DMotion.cancelColor(material);material.dispose();renderer.dispose();if(orgViewer===viewer)orgViewer=null}};
+    const handles=Print3DWallHandles.mount({T,host,camera,controls,getDimensions:()=>orgModel?.parameters,enabled:()=>!!orgModel&&mesh.visible,onResize(key,value){const minimum=key==='width'?(orgValues.columns+1)*orgValues.wall+5*orgValues.columns:key==='depth'?(orgValues.rows+1)*orgValues.wall+5*orgValues.rows:orgValues.bottom+1;value=Math.max(Math.max(key==='height'?5:10,minimum),Math.min(1000,Math.round(value*10)/10));document.querySelectorAll(`[data-org="${key}"]`).forEach(input=>input.value=value);clearTimeout(orgTimer);updateOrganizer()}});
+    const viewer={fit,clear(){mesh.visible=false},update(model,color){const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(Float32Array.from(model.vertices),3));geometry.setIndex(model.triangles);const flat=geometry.toNonIndexed();geometry.dispose();flat.translate(-model.parameters.width/2,-model.parameters.depth/2,0);flat.rotateX(-Math.PI/2);flat.computeVertexNormals();mesh.geometry.dispose();mesh.geometry=flat;mesh.visible=true;Print3DMotion.color(material,color);if(first){first=false;fit()}},dispose(){if(disposed)return;disposed=true;handles.dispose();observer.disconnect();controls.dispose();mesh.geometry.dispose();Print3DMotion.cancelColor(material);material.dispose();renderer.dispose();if(orgViewer===viewer)orgViewer=null}};
     orgViewer=viewer;document.getElementById('org-camera').onclick=fit;updateOrganizer();
-    function loop(){if(disposed)return;if(!host.isConnected){viewer.dispose();return}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
+    function loop(){if(disposed)return;if(!host.isConnected){viewer.dispose();return}controls.update();handles.update();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
   }catch(e){console.error('Organizer preview',e);if(host.isConnected)host.innerHTML='<p class="mut">3D-прев’ю недоступне. Генерація та завантаження STL працюють.</p>'}
 }
 
@@ -429,7 +439,7 @@ async function render(){
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   if(epoch!==renderEpoch)return;
-  view.innerHTML=h;Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
+  view.innerHTML=h;if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
   if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
@@ -718,7 +728,8 @@ async function onClick(e){
     const p=D.products.find(x=>x.id==id),from=Print3DMotion.snapshot(b);b.disabled=true;addToCart(p,msel.plastic,msel.color);closeModal();
     Print3DMotion.fly(from,document.querySelector('.ib[data-n=cart]'),ic('cart'));return;
   }
-  if(k==="qm"||k==="qp"){const it=cart[+id];if(it){it.qty+=k==="qp"?1:-1;if(it.qty<1)cart.splice(+id,1)}saveCart();return render()}
+  if(k==="cart-remove")return removeCartItem(+id,b);
+  if(k==="qm"||k==="qp"){const it=cart[+id];if(!it)return;if(k==="qm"&&it.qty===1)return removeCartItem(+id,b);it.qty+=k==="qp"?1:-1;saveCart();return render()}
   if(k==="thread"){chatUid=id;return render()}
   if(k==="threads"){chatUid=null;return render()}
   if(k==="pc"){b.classList.toggle("on");return}
@@ -727,11 +738,10 @@ async function onClick(e){
   if(k==="cancelp"){editId=null;return render()}
   run(async()=>{
     if(k==="msg"){
-      const inp=document.getElementById("cin"),im=fil("cimg"),body=inp.value.trim();if(!body&&!im)return;
-      b.disabled=true;
-      try{const {error}=await sb.from("messages").insert({user_id:chatUid,body:body||null,image:im?await up(im,"chat"):null});if(error)throw error}
-      finally{b.disabled=false}
-      inp.value="";const ci=document.getElementById("cimg");ci.value="";ci.parentNode.classList.remove("on");await pollChat(true);return;
+      const uid=chatUid,files=Print3DChat.files(uid),body=val("cin").trim();if(!body&&!files.length)return;
+      Print3DChat.busy(uid,true);
+      try{const attachments=[];for(const f of files)attachments.push({url:await up(f,"chat"),name:f.name,size:f.size,type:f.type});const {error}=await sb.from("messages").insert({user_id:uid,body:Print3DChat.encode(body,attachments),image:null});if(error)throw error;Print3DChat.clear(uid);if(chatUid===uid)await pollChat(true)}
+      finally{Print3DChat.busy(uid,false)}return;
     }
     if(k==="send"){
       if(!val("o-t").trim()){document.getElementById("o-e").textContent=a("need");return}

@@ -21,3 +21,14 @@ test('underside is open between pockets while each battery keeps a solid floor',
  for(const height of [6,35])for(const wall of [.8,3])verify(G.tray({...p,items:['AA','LR44','microSD'],bodyHeight:height,wall,bottom:2}));});
 
 test('print orientation puts the upper panel on the bed and preserves outward closed surfaces',()=>{const m=G.tray({...tray,bodyHeight:22}),r=G.printTray(m);verify(r);assert.equal(Math.min(...r.vertices.filter((_,i)=>i%3===2)),0);assert.equal(Math.max(...r.vertices.filter((_,i)=>i%3===2)),22);assert.notDeepEqual(r.vertices,m.vertices);});
+
+test('dragging tray walls preserves calibrated holes and exports matching manifold lids',()=>{
+ const original=G.tray({...tray,lid:true});
+ for(const [paddingX,paddingY] of [[.1,.1],[20,0],[0,35],[80,80]]){
+  const m=G.tray({...tray,lid:true,paddingX,paddingY});verify(m);verify(m.lid);
+  assert.ok(Math.abs(m.parameters.width-original.parameters.width-2*paddingX)<1e-7);
+  assert.ok(Math.abs(m.parameters.depth-original.parameters.depth-2*paddingY)<1e-7);
+  m.cells.forEach((cell,i)=>{const old=original.cells[i];assert.equal(cell.w,old.w);assert.equal(cell.d,old.d);assert.ok(Math.abs(cell.x-old.x-paddingX)<1e-7);assert.ok(Math.abs(cell.y-old.y-paddingY)<1e-7)});
+ }
+ assert.throws(()=>G.tray({...tray,paddingX:-1}));assert.throws(()=>G.tray({...tray,paddingY:NaN}));
+});
