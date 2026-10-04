@@ -41,6 +41,17 @@ function tray(p){
  const paddingX=p.paddingX??0,paddingY=p.paddingY??0;
  if([paddingX,paddingY].some(v=>!Number.isFinite(v)||v<0||v>80))throw Error('Запас біля стінок: від 0 до 80 мм.');
  const margin=p.wall;cells.forEach(c=>{c.x+=margin+paddingX;c.y+=margin+paddingY});width+=2*(margin+paddingX);depth+=2*(margin+paddingY);
+ // Move each pocket independently while preserving a solid printable body.
+ const transforms=p.transforms??[];
+ cells.forEach((c,i)=>{const t=transforms[i]??{},dx=t.dx??0,dy=t.dy??0,rotation=t.rotation??0,sx=t.scaleX??1,sy=t.scaleY??1;
+  if([dx,dy,rotation,sx,sy].some(v=>!Number.isFinite(v))||sx<.5||sx>2||sy<.5||sy>2)throw Error('Масштаб комірки: 50–200%.');
+  c.cx=c.x+c.outerW/2+dx;c.cy=c.y+c.outerD/2+dy;c.w*=sx;c.d*=c.round?sx:sy;c.rotation=c.round?0:rotation;
+  const angle=c.rotation*Math.PI/180,cs=Math.abs(Math.cos(angle)),sn=Math.abs(Math.sin(angle));
+  const bw=c.round?c.w/Math.cos(Math.PI/64)+2*p.wall:(c.w+2*p.wall)*cs+(c.d+2*p.wall)*sn,bd=c.round?bw:(c.w+2*p.wall)*sn+(c.d+2*p.wall)*cs;
+  c.bounds={left:c.cx-bw/2,right:c.cx+bw/2,top:c.cy-bd/2,bottom:c.cy+bd/2};c.x=c.cx-c.outerW/2;c.y=c.cy-c.outerD/2;
+  const b=c.bounds;if(b.left<p.wall+.15||b.right>width-p.wall-.15||b.top<p.wall+.15||b.bottom>depth-p.wall-.15)throw Error('Комірка впирається у зовнішню стінку. Додай запас біля стінок.');
+ });
+ for(let i=0;i<cells.length;i++)for(let j=i+1;j<cells.length;j++){const a=cells[i].bounds,b=cells[j].bounds;if(a.left<b.right+.15&&a.right>b.left-.15&&a.top<b.bottom+.15&&a.bottom>b.top-.15)throw Error('Комірки не можуть перетинатися.');}
  const vertices=[],triangles=[],ids=new Map();
  const vertex=(x,y,z)=>{const q=[x,y,z].map(v=>+v.toFixed(7)),key=q.join(',');if(!ids.has(key)){ids.set(key,vertices.length/3);vertices.push(...q)}return ids.get(key)};
  const tri=(a,b,c)=>triangles.push(a,b,c),quad=(a,b,c,d)=>{tri(a,b,c);tri(a,c,d)};
@@ -50,8 +61,9 @@ function tray(p){
  const corner=Math.min(4,width/4,depth/4),underside=height-p.wall;
  function rounded(inset){const r=corner-inset,result=[];for(const [cx,cy,angle] of [[width-corner,corner,-90],[width-corner,depth-corner,0],[corner,depth-corner,90],[corner,corner,180]])for(let i=0;i<=8;i++){const a=(angle+i*90/8)*Math.PI/180;result.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}return result}
  const outer=rounded(0),inside=rounded(p.wall);
- const loops=cells.map(c=>{const cx=c.x+c.outerW/2,cy=c.y+c.outerD/2,r=c.w/2/Math.cos(Math.PI/64);c.floor=height-Math.min(Math.max(c.itemHeight*.45,p.wall+.2),height-p.bottom);c.height=height;
- return {inner:c.round?circle(cx,cy,r):rectangle(cx-c.w/2,cy-c.d/2,c.w,c.d),outer:c.round?circle(cx,cy,r+p.wall):rectangle(cx-c.w/2-p.wall,cy-c.d/2-p.wall,c.w+2*p.wall,c.d+2*p.wall)};});
+ const loops=cells.map(c=>{const cx=c.cx,cy=c.cy,r=c.w/2/Math.cos(Math.PI/64);c.floor=height-Math.min(Math.max(c.itemHeight*.45,p.wall+.2),height-p.bottom);c.height=height;
+ const rotate=loop=>{const a=c.rotation*Math.PI/180,cs=Math.cos(a),sn=Math.sin(a);return loop.map(([x,y])=>[cx+(x-cx)*cs-(y-cy)*sn,cy+(x-cx)*sn+(y-cy)*cs])};
+ return {inner:c.round?circle(cx,cy,r):rotate(rectangle(cx-c.w/2,cy-c.d/2,c.w,c.d)),outer:c.round?circle(cx,cy,r+p.wall):rotate(rectangle(cx-c.w/2-p.wall,cy-c.d/2-p.wall,c.w+2*p.wall,c.d+2*p.wall))};});
  function plane(boundary,cutouts,z,down=false){const flat=boundary.flat(),holes=[];for(const l of cutouts){holes.push(flat.length/2);flat.push(...l.flat())}const faces=earcut(flat,holes,2),points=[];for(let i=0;i<flat.length;i+=2)points.push(vertex(flat[i],flat[i+1],z));
  // Split Earcut's collinear bridges to preserve shared boundary edges.
  const planar=(a,b,c)=>{if(Math.abs((vertices[b*3]-vertices[a*3])*(vertices[c*3+1]-vertices[a*3+1])-(vertices[b*3+1]-vertices[a*3+1])*(vertices[c*3]-vertices[a*3]))<1e-9)return;const q=[a,b,c];for(let j=0;j<3;j++){const u=q[j],v=q[(j+1)%3],apex=q[(j+2)%3],dx=vertices[v*3]-vertices[u*3],dy=vertices[v*3+1]-vertices[u*3+1],len=dx*dx+dy*dy;

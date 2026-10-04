@@ -8,8 +8,12 @@ function build(p){
   if(!Number.isInteger(p.columns)||!Number.isInteger(p.rows)||p.columns<1||p.rows<1||p.columns>12||p.rows>12)throw Error('Кількість рядів і колонок — цілі числа від 1 до 12.');
   const cw=(p.width-(p.columns+1)*p.wall)/p.columns,cd=(p.depth-(p.rows+1)*p.wall)/p.rows;
   if(cw<5||cd<5)throw Error('Відділення замалі: збільш розміри або зменш кількість відділень / товщину стінок.');
-  const axis=(size,n)=>{const gap=(size-(n+1)*p.wall)/n,a=[0];for(let i=0;i<n;i++){a.push(a.at(-1)+p.wall);a.push(a.at(-1)+gap)}a.push(size);return a};
-  const x=axis(p.width,p.columns),y=axis(p.depth,p.rows),z=[0,p.bottom,p.height],vertices=[],triangles=[],ids=new Map(),nx=x.length-1,ny=y.length-1;
+  const axis=(size,n,positions)=>{const gap=(size-(n+1)*p.wall)/n,centers=Array.from({length:n-1},(_,i)=>positions?.length===n-1?positions[i]:p.wall+gap+(gap+p.wall)*i+p.wall/2),a=[0,p.wall];
+    for(const center of centers){if(!Number.isFinite(center)||center-p.wall/2-a.at(-1)<5-1e-8)throw Error('Між перегородками потрібно залишити хоча б 5 мм.');a.push(center-p.wall/2,center+p.wall/2)}
+    if(size-p.wall-a.at(-1)<5-1e-8)throw Error('Між перегородками потрібно залишити хоча б 5 мм.');a.push(size-p.wall,size);return a};
+  const x=axis(p.width,p.columns,p.wallsX),y=axis(p.depth,p.rows,p.wallsY),z=[0,p.bottom,p.height],vertices=[],triangles=[],ids=new Map(),nx=x.length-1,ny=y.length-1;
+  const widths=Array.from({length:p.columns},(_,i)=>x[i*2+2]-x[i*2+1]),depths=Array.from({length:p.rows},(_,i)=>y[i*2+2]-y[i*2+1]);
+  const walls=[...Array.from({length:p.columns-1},(_,i)=>({id:'x'+i,axis:'x',index:i,position:(x[i*2+2]+x[i*2+3])/2,min:x[i*2+1]+5+p.wall/2,max:x[i*2+4]-5-p.wall/2})),...Array.from({length:p.rows-1},(_,i)=>({id:'y'+i,axis:'y',index:i,position:(y[i*2+2]+y[i*2+3])/2,min:y[i*2+1]+5+p.wall/2,max:y[i*2+4]-5-p.wall/2}))];
   const solid=(i,j,k)=>i>=0&&j>=0&&k>=0&&i<nx&&j<ny&&k<2&&(k===0||i%2===0||j%2===0);
   const vertex=q=>{const key=q.join(',');if(!ids.has(key)){ids.set(key,vertices.length/3);vertices.push(x[q[0]],y[q[1]],z[q[2]])}return ids.get(key)};
   const face=q=>{const v=q.map(vertex);triangles.push(v[0],v[1],v[2],v[0],v[2],v[3])};
@@ -22,7 +26,7 @@ function build(p){
     if(!solid(i,j,k-1))face([[i,j,k],[i,j+1,k],[i+1,j+1,k],[i+1,j,k]]);
     if(!solid(i,j,k+1))face([[i,j,k+1],[i+1,j,k+1],[i+1,j+1,k+1],[i,j+1,k+1]]);
   }
-  return {vertices,triangles,cellWidth:cw,cellDepth:cd,volume:p.width*p.depth*p.height-p.columns*p.rows*cw*cd*(p.height-p.bottom),parameters:{...p}};
+  return {vertices,triangles,cellWidth:cw,cellDepth:cd,widths,depths,walls,volume:p.width*p.depth*p.height-widths.reduce((a,b)=>a+b,0)*depths.reduce((a,b)=>a+b,0)*(p.height-p.bottom),parameters:{...p}};
 }
 function stl(model){
   const {vertices:v,triangles:t}=model,n=t.length/3,buffer=new ArrayBuffer(84+n*50),data=new DataView(buffer);data.setUint32(80,n,true);

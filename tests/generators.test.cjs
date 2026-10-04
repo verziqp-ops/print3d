@@ -32,3 +32,8 @@ test('dragging tray walls preserves calibrated holes and exports matching manifo
  }
  assert.throws(()=>G.tray({...tray,paddingX:-1}));assert.throws(()=>G.tray({...tray,paddingY:NaN}));
 });
+test('individual pocket translation rotation and scaling are exported into manifold STL',()=>{
+ const p={...tray,items:['AA','nano','AAA'],paddingX:25,paddingY:25,lid:true},original=G.tray(p),transforms=[{dx:-12,dy:7},{dy:-15,rotation:45,scaleX:1.2,scaleY:1.1}];
+ const m=G.tray({...p,transforms});verify(m);verify(m.lid);assert.ok(Math.abs(m.cells[0].cx-original.cells[0].cx+12)<1e-7);assert.ok(Math.abs(m.cells[0].cy-original.cells[0].cy-7)<1e-7);assert.equal(m.cells[0].w,original.cells[0].w);assert.equal(m.cells[1].rotation,45);assert.equal(m.cells[1].w,original.cells[1].w*1.2);assert.equal(m.cells[2].cx,original.cells[2].cx);assert.equal(m.parameters.width,original.parameters.width);
+ assert.throws(()=>G.tray({...p,transforms:[{dx:500}]}));assert.throws(()=>G.tray({...p,transforms:[{dx:original.cells[1].cx-original.cells[0].cx}]}));assert.throws(()=>G.tray({...p,transforms:[{scaleX:3}]}));
+});
