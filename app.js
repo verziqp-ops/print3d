@@ -236,11 +236,16 @@ async function pollChat(force){
 }
 
 function canViewPrint(o,admin=false){return !!o.gcode&&(admin||['printing','ready','shipping','delivered'].includes(o.status))}
+function orderRoute(status){
+ const current=ST.indexOf(status);if(current<0)return '';
+ return `<div class="order-route" aria-label="${lang==='ru'?'Этапы заказа':'Етапи замовлення'}" style="--route-progress:${current/(ST.length-1)*100}%">${ST.map((step,i)=>`<div class="route-step ${i<current?'done':i===current?'current':''}" style="--step:${i}" ${i===current?'aria-current="step"':''}><span aria-hidden="true">${i<current?'✓':i+1}</span><b>${a(step)}</b></div>`).join('')}</div>`;
+}
 function orderItem(o,adm,names){
   return `<div class="card2 oi"><div data-a="oopen" data-id="${o.id}" style="cursor:pointer">${o.image?`<img src="${esc(o.image)}">`:""}<b>${esc(o.title)}</b> ${badge(o.status)}
   ${adm?`<p class="mut">${a("client")}: ${esc(names[o.user_id]||"")}</p>`:""}
   <p class="mut">${esc(o.plastic||"")} ${esc(o.color||"")} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
   </div>
+  ${orderRoute(o.status)}
   ${canViewPrint(o,adm)?`<div class="rw"><button type="button" class="btn print-process" data-a="oopen" data-id="${o.id}"><span aria-hidden="true">▶</span> ${a("layers")}</button></div>`:""}
   ${o.descr?`<p>${esc(o.descr)}</p>`:""}${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}
   ${adm?`<div class="rw"><select data-c="st" data-id="${o.id}">${ST.map(s=>`<option value="${s}" ${s===o.status?"selected":""}>${a(s)}</option>`).join("")}</select></div>
@@ -362,7 +367,7 @@ async function mountOrganizer(){
     function fit(){const p=orgModel?orgModel.parameters:ORG_DEFAULT,span=Math.max(p.width,p.depth,p.height),aspect=Math.max(.3,host.clientWidth/host.clientHeight),distance=span*1.9/Math.min(1,aspect);camera.position.set(distance*.72,p.height+distance*.75,distance*.95);controls.target.set(0,p.height*.4,0);controls.update()}
     function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
     const observer=new ResizeObserver(resize);observer.observe(host);resize();
-    const viewer={fit,clear(){mesh.visible=false},update(model,color){const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(Float32Array.from(model.vertices),3));geometry.setIndex(model.triangles);const flat=geometry.toNonIndexed();geometry.dispose();flat.translate(-model.parameters.width/2,-model.parameters.depth/2,0);flat.rotateX(-Math.PI/2);flat.computeVertexNormals();mesh.geometry.dispose();mesh.geometry=flat;mesh.visible=true;material.color.set(color);if(first){first=false;fit()}},dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();mesh.geometry.dispose();material.dispose();renderer.dispose();if(orgViewer===viewer)orgViewer=null}};
+    const viewer={fit,clear(){mesh.visible=false},update(model,color){const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(Float32Array.from(model.vertices),3));geometry.setIndex(model.triangles);const flat=geometry.toNonIndexed();geometry.dispose();flat.translate(-model.parameters.width/2,-model.parameters.depth/2,0);flat.rotateX(-Math.PI/2);flat.computeVertexNormals();mesh.geometry.dispose();mesh.geometry=flat;mesh.visible=true;Print3DMotion.color(material,color);if(first){first=false;fit()}},dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();mesh.geometry.dispose();Print3DMotion.cancelColor(material);material.dispose();renderer.dispose();if(orgViewer===viewer)orgViewer=null}};
     orgViewer=viewer;document.getElementById('org-camera').onclick=fit;updateOrganizer();
     function loop(){if(disposed)return;if(!host.isConnected){viewer.dispose();return}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}loop();
   }catch(e){console.error('Organizer preview',e);if(host.isConnected)host.innerHTML='<p class="mut">3D-прев’ю недоступне. Генерація та завантаження STL працюють.</p>'}
@@ -429,8 +434,11 @@ async function render(){
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
 }
 
-const closeModal=()=>{if(modal){modal.classList.remove("show");modal.innerHTML=""}};
-function openProduct(id){
+let modalEpoch=0;
+function showModal(source){modalEpoch++;modal.classList.add('show');Print3DMotion.open(modal.querySelector('.sheet'),source)}
+function closeModal(){if(!modal||!modal.classList.contains('show'))return;const epoch=++modalEpoch;const animation=Print3DMotion.close(modal.querySelector('.sheet'));const clear=()=>{if(epoch!==modalEpoch)return;modal.classList.remove('show');modal.innerHTML=''};if(animation)animation.finished.then(clear).catch(()=>{});else clear()}
+
+function openProduct(id,source){
   const p=D.products.find(x=>x.id==id);if(!p)return;
   const fc=fixC(p);msel={id:p.id,plastic:p.plastic||null,color:fc};
   const pl=D.plastics.find(x=>x.name===p.plastic);
@@ -444,7 +452,7 @@ function openProduct(id){
   ${cl.length?`<div class="lb">${a("color")}</div>${col}`:""}
   <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}">${ic("heart")}</button></div>
   </div></div>`;
-  modal.classList.add("show");
+  showModal(source);
 }
 const ORD={};
 function parseG(txt){
@@ -599,11 +607,11 @@ function openOrder(id){
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
   modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
   ${showPrint?`<div class="gv" id="gv"></div>`:`<div class="media">${o.image?`<img src="${esc(o.image)}">`:ic("cube")}</div>`}
-  <div><h2>${esc(o.title)}</h2><p>${badge(o.status)}</p>
+  <div><h2>${esc(o.title)}</h2><p>${badge(o.status)}</p>${orderRoute(o.status)}
   <p class="mut">${esc([o.plastic,o.color].filter(Boolean).join(" · "))} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
   ${o.descr?`<p class="mut">${esc(o.descr)}</p>`:""}${showPrint&&o.image?`<img src="${esc(o.image)}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-top:8px">`:""}
   ${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}</div></div>`;
-  modal.classList.add("show");
+  showModal();
   if(showPrint)gview(document.getElementById("gv"),o.gcode,{status:o.status,started});
 }
 let T3=null;const G3={};
@@ -631,7 +639,10 @@ async function show3d(box,url,fb,color){
     obj=obj.clone(true);const ownedMaterials=[];
     obj.traverse(node=>{if(!node.isMesh)return;const clone=material=>{const copy=material.clone();ownedMaterials.push(copy);return copy};node.material=Array.isArray(node.material)?node.material.map(clone):clone(node.material)});
     paintModel(obj,box.dataset.modelColor);
-    let need=true;box.setModelColor=color=>{box.dataset.modelColor=color;paintModel(obj,color);need=true};
+    let need=true,colorTransition=null;
+    box.setModelColor=color=>{box.dataset.modelColor=color;
+      if(Print3DMotion.reduced()){paintModel(obj,color);colorTransition=null}
+      else colorTransition={start:performance.now(),target:new T.Color(color),from:ownedMaterials.map(material=>material.color?.clone())};need=true};
     const sz=obj.userData.size||100,sc=new T.Scene();sc.add(obj);
     sc.add(new T.HemisphereLight(0xffffff,0x332211,1.6));const dl=new T.DirectionalLight(0xffffff,1.4);dl.position.set(2,3,4);sc.add(dl);
     const dpr=Math.min(devicePixelRatio||1,1.5);
@@ -643,6 +654,7 @@ async function show3d(box,url,fb,color){
     setTimeout(()=>{ct.autoRotate=false},8000);
     (function loop(){
       if(!r.domElement.isConnected){sc.remove(obj);ct.dispose();ownedMaterials.forEach(material=>material.dispose());if(box.modelRequest===request)delete box.setModelColor;r.dispose();return}
+      if(colorTransition){const progress=Math.min(1,(performance.now()-colorTransition.start)/480),ease=progress*progress*(3-2*progress);ownedMaterials.forEach((material,i)=>{if(material.color&&colorTransition.from[i])material.color.copy(colorTransition.from[i]).lerp(colorTransition.target,ease)});need=true;if(progress===1)colorTransition=null}
       const ch=ct.update();if(ch||need){r.render(sc,cam);need=false}
       requestAnimationFrame(loop);
     })();
@@ -653,9 +665,9 @@ function addToCart(p,pl,co){
   f?f.qty++:cart.push({pid:p.id,title:p.title,price:p.price,image:p.image,plastic:pl,color:co,qty:1});
   saveCart();
 }
-async function toggleFav(pid){
+async function toggleFav(pid,source){
   const on=favs.has(pid);on?favs.delete(pid):favs.add(pid);
-  document.querySelectorAll(`[data-a=fav][data-id="${pid}"]`).forEach(x=>x.classList.toggle("on",!on));head();
+  document.querySelectorAll(`[data-a=fav][data-id="${pid}"]`).forEach(x=>x.classList.toggle("on",!on));head();Print3DMotion.favorite(source,!on);Print3DMotion.bounce(document.querySelector(".ib[data-n=fav]"));
   const r=on?await sb.from("favorites").delete().eq("product_id",pid).eq("user_id",user.id):await sb.from("favorites").insert({product_id:pid});
   if(r.error){on?favs.add(pid):favs.delete(pid);render()}else if(tab==="fav")render();
 }
@@ -678,7 +690,7 @@ async function onClick(e){
   if(k==="new"){oopen=id;return go("order")}
   if(k==="goto"){const el=document.getElementById(n);return el&&el.scrollIntoView({behavior:"smooth",block:"start"})}
   if(k==="cf"){fcat=n===""?null:+n;document.getElementById("cg").innerHTML=catBlock();return}
-  if(k==="open")return openProduct(id);
+  if(k==="open")return openProduct(id,b);
   if(k==="oopen")return openOrder(id);
   if(k==="m3d"||k==="mph"){
     const p=D.products.find(x=>x.id==id),box=document.getElementById("media");if(!p||!box)return;
@@ -686,13 +698,12 @@ async function onClick(e){
     if(k==="m3d")show3d(box,p.model,photoHTML(p),msel.color?colHex(msel.color):'#ff8a1f');else{box.modelRequest=null;delete box.setModelColor;box.innerHTML=photoHTML(p)}return;
   }
   if(k==="close")return closeModal();
-  if(k==="fav")return toggleFav(+id);
+  if(k==="fav")return toggleFav(+id,b);
   if(k==="qadd"){
     const p=D.products.find(x=>x.id==id);
     const fc=fixC(p);const need=(!p.plastic&&D.plastics.length)||(!fc&&pcols(p).length);
-    if(need)return openProduct(id);
-    b.animate([{transform:"scale(1)"},{transform:"scale(1.3)"},{transform:"scale(1)"}],{duration:450,easing:"cubic-bezier(.34,1.56,.64,1)"});
-    return addToCart(p,p.plastic||null,fc);
+    if(need)return openProduct(id,b.closest('.pcard'));
+    const from=Print3DMotion.snapshot(b);addToCart(p,p.plastic||null,fc);Print3DMotion.fly(from,document.querySelector('.ib[data-n=cart]'),ic('cart'));return;
   }
   if(k==="mpl"||k==="mco"||k==="pl"||k==="co"){
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
@@ -701,8 +712,8 @@ async function onClick(e){
     return;
   }
   if(k==="addcart"){
-    const p=D.products.find(x=>x.id==id);addToCart(p,msel.plastic,msel.color);closeModal();
-    document.querySelector(".ib[data-n=cart]").animate([{transform:"scale(1)"},{transform:"scale(1.35)"},{transform:"scale(1)"}],{duration:500,easing:"cubic-bezier(.34,1.56,.64,1)"});return;
+    const p=D.products.find(x=>x.id==id),from=Print3DMotion.snapshot(b);b.disabled=true;addToCart(p,msel.plastic,msel.color);closeModal();
+    Print3DMotion.fly(from,document.querySelector('.ib[data-n=cart]'),ic('cart'));return;
   }
   if(k==="qm"||k==="qp"){const it=cart[+id];if(it){it.qty+=k==="qp"?1:-1;if(it.qty<1)cart.splice(+id,1)}saveCart();return render()}
   if(k==="thread"){chatUid=id;return render()}
