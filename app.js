@@ -265,8 +265,8 @@ function orderForm(p){
 const cartView=()=>{
   if(!cart.length)return `<h2>${a("cart")}</h2><p class="mut">${a("cartEmpty")}</p>`;
   const tot=cart.reduce((s,x)=>s+(x.price||0)*x.qty,0);
-  return `<h2>${a("cart")}</h2><div style="max-width:620px">`+cart.map((x,i)=>`<div class="card2 ci">${x.image?`<img src="${esc(x.image)}">`:""}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><p class="mut">${esc([x.plastic,x.color].filter(Boolean).join(" · "))}${x.price!=null?" · "+x.price+" грн":""}</p></div><div class="qty"><button data-a="qm" data-id="${i}">−</button><b>${x.qty}</b><button data-a="qp" data-id="${i}">+</button></div></div>`).join("")+
-    `<div class="card2"><div class="rw"><b style="flex:1">${a("total")}</b><b>${tot} грн</b></div><button class="btn blk" data-a="checkout">${a("checkout")}</button></div></div>`;
+  return `<h2>${a("cart")}</h2><div style="max-width:620px">`+cart.map((x,i)=>`<div class="card2 ci">${x.image?`<img src="${esc(x.image)}">`:""}<div style="flex:1;min-width:0"><b>${esc(x.title)}</b><p class="mut">${esc([x.plastic,x.color].filter(Boolean).join(" · "))}${x.price!=null?" · "+x.price+" грн":""}</p></div><div class="qty"><button data-a="qm" data-id="${i}">−</button><b data-number-key="${esc(JSON.stringify([x.pid,x.plastic,x.color]))}" data-number-value="${x.qty}">${x.qty}</b><button data-a="qp" data-id="${i}">+</button></div></div>`).join("")+
+    `<div class="card2"><div class="rw"><b style="flex:1">${a("total")}</b><b data-number-key="cart-total" data-number-value="${tot}" data-number-money="true" data-number-suffix=" грн">${tot} грн</b></div><button class="btn blk" data-a="checkout">${a("checkout")}</button></div></div>`;
 };
 async function profile(){
   let h=tabs([["info",a("info")],["orders",a("orders")],...(me.is_admin?[["adm",a("adm")]]:[])],sub,"sub");
@@ -419,14 +419,17 @@ function updateHeaderScroll(reset=false){
     hdr.classList.toggle('scroll-hidden',headerShouldHide(true,y,delta,headerDistance,hdr.classList.contains('scroll-hidden')))}
   headerY=y;
 }
+let renderEpoch=0;
 async function render(){
+  const epoch=++renderEpoch,key=[tab,sub,asub,generatorKind].join(':'),previousNumbers=Print3DMotion.captureNumbers(view);
   window.Print3DStudio?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
-  view.innerHTML=h;
+  if(epoch!==renderEpoch)return;
+  view.innerHTML=h;Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
   if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
@@ -622,12 +625,12 @@ function paintModel(obj,color){
 }
 async function show3d(box,url,fb,color){
   const request=Symbol('model');box.modelRequest=request;box.dataset.modelColor=color||'#ff8a1f';delete box.setModelColor;
-  box.innerHTML=`<p class="mut" id="p3">${a("load3d")}</p>`;
+  const loadingLabel=Print3DMotion.loading(box,a("load3d"));
   try{
     const {T,OrbitControls,B}=await load3();
     let obj=G3[url];
     if(!obj){
-      const pg=e=>{const el=document.getElementById("p3");if(el&&e.total)el.textContent=a("load3d")+" "+Math.round(e.loaded/e.total*100)+"%"};
+      const pg=e=>{if(box.modelRequest!==request||!loadingLabel.isConnected)return;const el=loadingLabel;if(e.total)el.textContent=a("load3d")+" "+Math.round(e.loaded/e.total*100)+"%"};
       if(url.split("?")[0].toLowerCase().endsWith(".3mf")){const {ThreeMFLoader}=await import(B+"examples/jsm/loaders/3MFLoader.js/+esm");obj=await new ThreeMFLoader().loadAsync(url,pg)}
       else{const {STLLoader}=await import(B+"examples/jsm/loaders/STLLoader.js/+esm");const g=await new STLLoader().loadAsync(url,pg);
         obj=new T.Mesh(g,new T.MeshLambertMaterial({color:0xff8a1f}))}
@@ -647,7 +650,7 @@ async function show3d(box,url,fb,color){
     sc.add(new T.HemisphereLight(0xffffff,0x332211,1.6));const dl=new T.DirectionalLight(0xffffff,1.4);dl.position.set(2,3,4);sc.add(dl);
     const dpr=Math.min(devicePixelRatio||1,1.5);
     const r=new T.WebGLRenderer({antialias:dpr<1.5,alpha:true,powerPreference:"high-performance"});r.setPixelRatio(dpr);
-    const w=box.clientWidth,h=box.clientHeight;r.setSize(w,h);box.innerHTML="";box.appendChild(r.domElement);
+    const w=box.clientWidth,h=box.clientHeight;r.setSize(w,h);box.innerHTML="";box.appendChild(r.domElement);Print3DMotion.model(r.domElement);
     const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,sz/1000),sz*20);cam.position.set(sz*.62,sz*.5,sz*.78);
     const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.enableZoom=true;ct.minDistance=sz*.18;ct.maxDistance=sz*4;ct.autoRotate=true;ct.autoRotateSpeed=1.5;
     ct.addEventListener("change",()=>need=true);ct.addEventListener("start",()=>{ct.autoRotate=false});
@@ -689,7 +692,7 @@ async function onClick(e){
   if(k==="roundprice"){const result=readCalculator();if(result){document.getElementById("calc-rounded").textContent=moneyUA(Math.ceil(result.price))+" грн";}return}
   if(k==="new"){oopen=id;return go("order")}
   if(k==="goto"){const el=document.getElementById(n);return el&&el.scrollIntoView({behavior:"smooth",block:"start"})}
-  if(k==="cf"){fcat=n===""?null:+n;document.getElementById("cg").innerHTML=catBlock();return}
+  if(k==="cf"){fcat=n===""?null:+n;document.getElementById("cg").innerHTML=catBlock();Print3DMotion.reveal(view);return}
   if(k==="open")return openProduct(id,b);
   if(k==="oopen")return openOrder(id);
   if(k==="m3d"||k==="mph"){
