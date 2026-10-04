@@ -60,7 +60,7 @@ body.bg-ready{position:relative;min-height:100svh}
 .ib{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--field);color:var(--text);display:grid;place-items:center;cursor:pointer;transition:transform .5s var(--sp),color .3s}
 .ib svg{width:20px;height:20px}.ib:hover{transform:scale(1.12)}.ib:active{transform:scale(.88)}.ib.on{color:var(--accent)}
 .ib i{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#1a0d00;font:700 11px/18px var(--f);text-align:center;font-style:normal;padding:0 4px}.ib i:empty{display:none}
-@media(max-width:640px){.hdr{border-radius:26px}.hdr nav{order:3;flex-basis:100%}}
+@media(max-width:640px){.hdr{border-radius:26px}.hdr nav{order:3;flex-basis:100%;flex-wrap:wrap}.hdr nav .nl{font-size:14px;padding:8px 10px}}
 .hero{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:22px;align-items:center}.hero:has(.hd){grid-template-columns:1.1fr 1fr}@media(max-width:820px){.hero:has(.hd){grid-template-columns:1fr}}
 .hd img{width:100%;max-height:440px;object-fit:contain;filter:drop-shadow(0 20px 50px rgba(255,120,20,.35));animation:fl 6s ease-in-out infinite alternate}
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:38px}.steps .step{border-top:0;padding:14px 16px;font-size:14px}
@@ -176,7 +176,7 @@ const fixC=p=>p.colors&&p.colors.length===1?p.colors[0]:null;
 function head(){
   if(!hdr)return;
   hdr.innerHTML=`<div class="logo" data-a="tab" data-n="home">${ic("cube")}Print3D</div>
-  <nav><button class="nl ${tab==="home"?"on":""}" data-a="tab" data-n="home">${a("home")}</button><button class="nl ${tab==="order"?"on":""}" data-a="new">${a("order")}</button><button class="nl ${tab==="chat"?"on":""}" data-a="tab" data-n="chat">${a("chat")}</button></nav>
+  <nav><button class="nl ${tab==="home"?"on":""}" data-a="tab" data-n="home">${a("home")}</button><button class="nl ${tab==="order"?"on":""}" data-a="new">${a("order")}</button><button class="nl ${tab==="chat"?"on":""}" data-a="tab" data-n="chat">${a("chat")}</button>${me.is_admin?`<button class="nl ${tab==="generators"?"on":""}" data-a="tab" data-n="generators">${lang==="ru"?"Генераторы":"Генератори"}</button>`:""}</nav>
   <div class="ico"><button class="ib ${tab==="fav"?"on":""}" data-a="tab" data-n="fav">${ic("heart")}<i>${favs.size||""}</i></button>
   <button class="ib ${tab==="cart"?"on":""}" data-a="tab" data-n="cart">${ic("cart")}<i>${cartN()||""}</i></button>
   <button class="ib ${tab==="prof"?"on":""}" data-a="tab" data-n="prof">${ic("user")}</button>
@@ -387,7 +387,7 @@ async function mountOrganizer(){
 let generatorKind='organizer';
 const generatorTabs=()=>`<div class="tabs">${[['organizer','Органайзер'],['tray','Лотки під предмети'],['vase','Вази']].map(([key,name])=>`<button class="chip ${generatorKind===key?'on':''}" data-a="genkind" data-n="${key}">${name}</button>`).join('')}</div>`;
 async function admin(){
-  let h=tabs([["orders",a("orders")],["calc","Калькулятор"],["generators",lang==="ru"?"Генераторы":"Генератори"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
+  let h=tabs([["orders",a("orders")],["calc","Калькулятор"],["prods",a("prods")],["cats",a("cats")],["colors",a("colors")],["plastics",a("plastics")]],asub,"asub");
   if(asub==="orders"){
     const [o,p]=await Promise.all([sb.from("orders").select("*").order("id",{ascending:false}),sb.from("profiles").select("id,first_name,last_name")]);
     const names={};(p.data||[]).forEach(x=>names[x.id]=((x.first_name||"")+" "+(x.last_name||"")).trim());
@@ -396,7 +396,6 @@ async function admin(){
       ((o.data||[]).filter(x=>!fcl||x.user_id===fcl).map(x=>orderItem(x,true,names)).join("")||`<p class="mut">${a("empty")}</p>`);
   }
   if(asub==="calc")return h+calculatorHTML();
-  if(asub==="generators")return h+generatorTabs()+(generatorKind==='organizer'?organizerHTML():window.Print3DStudio.html(generatorKind));
   if(asub==="prods"){
     const e=EP();
     return h+`<div class="card2" style="max-width:560px"><label class="f"><span>${a("title")}</span><input type="text" id="n1" value="${esc(e.title)}"></label>
@@ -432,17 +431,19 @@ function updateHeaderScroll(reset=false){
 }
 let renderEpoch=0;
 async function render(){
+  if(tab==="generators"&&!me.is_admin)tab="home";
   const epoch=++renderEpoch,key=[tab,sub,asub,generatorKind].join(':'),previousNumbers=Print3DMotion.captureNumbers(view);
   window.Print3DStudio?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
+    else if(tab==="generators")h=generatorTabs()+(generatorKind==='organizer'?organizerHTML():window.Print3DStudio.html(generatorKind));
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   if(epoch!==renderEpoch)return;
   view.innerHTML=h;window.Print3DSliders?.enhance(view);if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
-  if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
+  if(tab==="generators"&&me.is_admin){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
@@ -687,7 +688,7 @@ async function toggleFav(pid,source){
 }
 const run=async fn=>{try{await fn()}catch(e){console.error(e);alert(a("err"))}};
 const refresh=async()=>{await load();await render()};
-const go=async t=>{closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
+const go=async t=>{if(t==="generators"&&!me.is_admin)return;closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
 
 async function onClick(e){
   const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.type==="file")return;
@@ -696,7 +697,7 @@ async function onClick(e){
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
   if(k==="asub"){asub=n;return render()}
-  if(k==="genkind"){generatorKind=n;return render()}
+  if(k==="genkind"){if(!me.is_admin||tab!=="generators")return;generatorKind=n;return render()}
   if(k==="org-download")return downloadOrganizer();
   if(k==="org-preset")return organizerPreset(n);
   if(k==="org-reset")return organizerPreset('default');
