@@ -352,7 +352,7 @@ function updateOrganizer(){
     const model=window.Print3DOrganizer.build(values);orgModel=model;orgValues=values;try{localStorage.setItem('print3d:organizer',JSON.stringify(values))}catch(e){}
     document.getElementById('org-error').textContent='';document.getElementById('org-info').textContent=`${values.columns*values.rows} відділень · ширина ${Math.min(...model.widths).toFixed(1)}–${Math.max(...model.widths).toFixed(1)} · глибина ${Math.min(...model.depths).toFixed(1)}–${Math.max(...model.depths).toFixed(1)} × ${(values.height-values.bottom).toFixed(1)} мм`;
     const fits=values.width<=256&&values.depth<=256&&values.height<=256;document.getElementById('org-fit').textContent=fits?'✓ Габарити поміщаються в 256 × 256 × 256 мм. Залиш місце для кайми у слайсері.':'⚠ Габарити перевищують 256 × 256 × 256 мм — перевір розмір свого принтера.';
-    if(orgViewer)orgViewer.update(model,values.color);button.disabled=false;
+    if(orgViewer)orgViewer.update(model,values.color);window.Print3DSliders?.enhance(document.querySelector(".org-panel"));button.disabled=false;
   }catch(e){document.getElementById('org-error').textContent=e.message;document.getElementById('org-info').textContent='';document.getElementById('org-fit').textContent='';button.disabled=true;if(orgViewer)orgViewer.clear()}
 }
 function queueOrganizerUpdate(){clearTimeout(orgTimer);const button=document.querySelector('[data-a="org-download"]');if(button)button.disabled=true;orgTimer=setTimeout(updateOrganizer,140)}
@@ -440,7 +440,7 @@ async function render(){
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
   if(epoch!==renderEpoch)return;
-  view.innerHTML=h;if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
+  view.innerHTML=h;window.Print3DSliders?.enhance(view);if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
   if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
