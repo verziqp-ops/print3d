@@ -82,7 +82,7 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 .cb{width:38px;height:38px;border-radius:12px;border:0;background:var(--accent);color:#1a0d00;display:grid;place-items:center;cursor:pointer;margin-left:auto;transition:transform .5s var(--sp);box-shadow:0 8px 20px -8px rgba(255,120,20,.8)}
 .cb svg{width:20px;height:20px}.cb:hover{transform:scale(1.12)}.cb:active{transform:scale(.86)}
 .hb{position:absolute;top:18px;right:18px;z-index:2;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.5);color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .5s var(--sp)}
-.hb svg{width:18px;height:18px}.hb.on{color:#ff5a4d}.hb.on svg{fill:currentColor}.hb:active{transform:scale(.8)}
+.hb svg{width:18px;height:18px}.hb.on{color:#ff5a4d}.hb.on svg{fill:currentColor}.ib[data-a="fav"].on{color:#ff5a4d}.ib[data-a="fav"].on svg{fill:currentColor}.hb:active{transform:scale(.8)}
 .mut{color:var(--muted);font-size:13px;margin:2px 0}.lb{font-size:12px;color:var(--muted);margin:12px 0 6px 4px}
 .stats{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.stat{display:flex;align-items:center;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:600 13px var(--f)}
 .stat svg{width:16px;height:16px;color:var(--accent)}
