@@ -431,7 +431,7 @@ function updateHeaderScroll(reset=false){
   headerY=y;
 }
 let renderEpoch=0;
-async function render(transition=null){
+async function render(){
   const epoch=++renderEpoch,key=[tab,sub,asub,generatorKind].join(':'),previousNumbers=Print3DMotion.captureNumbers(view);
   window.Print3DStudio?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
   head();let h="";
@@ -439,8 +439,8 @@ async function render(transition=null){
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
     else if(tab==="fav")h=favView();else if(tab==="cart")h=cartView();else if(tab==="chat")h=await chatView();else h=await profile();
   }catch(e){console.error(e);h=`<p class="err">${a("err")}</p>`}
-  if(epoch!==renderEpoch||transition&&transition.epoch!==navigationEpoch)return;
-  view.innerHTML=h;window.Print3DSliders?.enhance(view);if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);if(transition?.top)scrollTo({top:0,left:0,behavior:'instant'});Print3DMotion.view(view,key,transition?.origin);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
+  if(epoch!==renderEpoch)return;
+  view.innerHTML=h;window.Print3DSliders?.enhance(view);if(tab==="chat")Print3DChat.mount(chatUid,me.is_admin);Print3DMotion.view(view,key);Print3DMotion.reveal(view);Print3DMotion.numbers(view,previousNumbers);
   if(tab==="prof"&&sub==="adm"&&asub==="calc")updateCalculator();
   if(tab==="prof"&&sub==="adm"&&asub==="generators"){if(generatorKind==='organizer')mountOrganizer();else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
@@ -448,9 +448,9 @@ async function render(transition=null){
   help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
 }
 
-let modalEpoch=0;
-function showModal(source){modalEpoch++;modal.classList.add('show');Print3DMotion.open(modal.querySelector('.sheet'),source)}
-function closeModal(){if(!modal||!modal.classList.contains('show'))return;const epoch=++modalEpoch;const animation=Print3DMotion.close(modal.querySelector('.sheet'));const clear=()=>{if(epoch!==modalEpoch)return;modal.classList.remove('show');modal.innerHTML=''};if(animation)animation.finished.then(clear).catch(()=>{});else clear();return animation?animation.finished.catch(()=>{}):Promise.resolve()}
+let modalEpoch=0,productMorph=false;
+function showModal(source,morph=false){modalEpoch++;productMorph=morph;modal.classList.add('show');(morph?Print3DMotion.open:Print3DMotion.simpleOpen)(modal.querySelector('.sheet'),source)}
+function closeModal(){if(!modal||!modal.classList.contains('show'))return;const epoch=++modalEpoch;const animation=(productMorph?Print3DMotion.close:Print3DMotion.simpleClose)(modal.querySelector('.sheet'));const clear=()=>{if(epoch!==modalEpoch)return;modal.classList.remove('show');modal.innerHTML=''};if(animation)animation.finished.then(clear).catch(()=>{});else clear()}
 
 function openProduct(id,source){
   const p=D.products.find(x=>x.id==id);if(!p)return;
@@ -466,7 +466,7 @@ function openProduct(id,source){
   ${cl.length?`<div class="lb">${a("color")}</div>${col}`:""}
   <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}">${ic("heart")}</button></div>
   </div></div>`;
-  showModal(source);
+  showModal(source,true);
 }
 const ORD={};
 function parseG(txt){
@@ -615,7 +615,7 @@ async function gview(box,url,o){
     function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=["ready","shipping","delivered"].includes(o.status)?G.T:Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}if(dirty){update();dirty=false}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
   }catch(e){console.error('G-code 3D',e);if(box.isConnected)box.innerHTML='<p class="mut">'+a('err')+'</p>'}
 }
-function openOrder(id,source){
+function openOrder(id){
   const o=ORD[id];if(!o)return;
   const showPrint=canViewPrint(o,me.is_admin);
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
@@ -625,7 +625,7 @@ function openOrder(id,source){
   <p class="mut">${esc([o.plastic,o.color].filter(Boolean).join(" · "))} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
   ${o.descr?`<p class="mut">${esc(o.descr)}</p>`:""}${showPrint&&o.image?`<img src="${esc(o.image)}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-top:8px">`:""}
   ${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}</div></div>`;
-  showModal(source);
+  showModal();
   if(showPrint)gview(document.getElementById("gv"),o.gcode,{status:o.status,started});
 }
 let T3=null;const G3={};
@@ -687,27 +687,25 @@ async function toggleFav(pid,source){
 }
 const run=async fn=>{try{await fn()}catch(e){console.error(e);alert(a("err"))}};
 const refresh=async()=>{await load();await render()};
-let navigationEpoch=0,catalogEpoch=0;
-async function navigate(change,source,top=false){const epoch=++navigationEpoch,origin=Print3DMotion.anchor(source);view?.classList.add('motion-routing');await Promise.all([closeModal(),Print3DMotion.leaveView(view)]);if(epoch!==navigationEpoch)return;change();try{await render({origin,top,epoch})}finally{if(epoch===navigationEpoch)view?.classList.remove('motion-routing')}}
-const go=async(t,source,prepare)=>{const button=source||document.querySelector(t==='order'?'[data-a="new"]':`.hdr [data-a="tab"][data-n="${t}"]`);return navigate(()=>{if(t==='chat')chatUid=null;tab=t;prepare?.()},button,true)};
+const go=async t=>{closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
 
 async function onClick(e){
   const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.type==="file")return;
   const k=b.dataset.a,id=b.dataset.id,n=b.dataset.n;
-  if(k==="tab")return go(n,b);
+  if(k==="tab")return go(n);
   if(k==="lang")return setLang(b.dataset.l);
-  if(k==="sub")return navigate(()=>sub=n,b);
-  if(k==="asub")return navigate(()=>asub=n,b);
-  if(k==="genkind")return navigate(()=>generatorKind=n,b);
+  if(k==="sub"){sub=n;return render()}
+  if(k==="asub"){asub=n;return render()}
+  if(k==="genkind"){generatorKind=n;return render()}
   if(k==="org-download")return downloadOrganizer();
   if(k==="org-preset")return organizerPreset(n);
   if(k==="org-reset")return organizerPreset('default');
   if(k==="roundprice"){const result=readCalculator();if(result){document.getElementById("calc-rounded").textContent=moneyUA(Math.ceil(result.price))+" грн";}return}
-  if(k==="new")return go("order",b,()=>oopen=id);
+  if(k==="new"){oopen=id;return go("order")}
   if(k==="goto"){const el=document.getElementById(n);return el&&el.scrollIntoView({behavior:"smooth",block:"start"})}
-  if(k==="cf"){const epoch=++catalogEpoch,cg=document.getElementById("cg"),origin=Print3DMotion.anchor(b),animation=Print3DMotion.close(cg);if(animation)await animation.finished.catch(()=>{});if(epoch!==catalogEpoch||!cg?.isConnected)return;fcat=n===""?null:+n;cg.innerHTML=catBlock();Print3DMotion.open(cg,origin);Print3DMotion.reveal(view);return}
+  if(k==="cf"){fcat=n===""?null:+n;document.getElementById("cg").innerHTML=catBlock();Print3DMotion.reveal(view);return}
   if(k==="open")return openProduct(id,b);
-  if(k==="oopen")return openOrder(id,b);
+  if(k==="oopen")return openOrder(id);
   if(k==="m3d"||k==="mph"){
     const p=D.products.find(x=>x.id==id),box=document.getElementById("media");if(!p||!box)return;
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
@@ -733,12 +731,12 @@ async function onClick(e){
   }
   if(k==="cart-remove")return removeCartItem(+id,b);
   if(k==="qm"||k==="qp"){const it=cart[+id];if(!it)return;if(k==="qm"&&it.qty===1)return removeCartItem(+id,b);it.qty+=k==="qp"?1:-1;saveCart();return render()}
-  if(k==="thread")return navigate(()=>chatUid=id,b);
-  if(k==="threads")return navigate(()=>chatUid=null,b);
+  if(k==="thread"){chatUid=id;return render()}
+  if(k==="threads"){chatUid=null;return render()}
   if(k==="pc"){b.classList.toggle("on");return}
   if(k==="out")return sb.auth.signOut();
-  if(k==="editp")return navigate(()=>editId=id,b,true);
-  if(k==="cancelp")return navigate(()=>editId=null,b);
+  if(k==="editp"){editId=id;await render();scrollTo(0,0);return}
+  if(k==="cancelp"){editId=null;return render()}
   run(async()=>{
     if(k==="msg"){
       const uid=chatUid,files=Print3DChat.files(uid),body=val("cin").trim();if(!body&&!files.length)return;
