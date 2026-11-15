@@ -1,0 +1,39 @@
+name: Supabase database activity check
+
+on:
+  schedule:
+    # Four times per day, UTC. Keep away from top-of-hour GitHub Actions peaks.
+    - cron: '17 2,8,14,20 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/supabase-keepalive.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-db-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      SUPABASE_URL: https://lcrdmksxkgwqkmhfwjan.supabase.co
+      # Publishable key is designed for public clients; never put a service-role key here.
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_UiYXZjA48EyAXGEsjtPdhA_4Ak78FZL
+    steps:
+      - name: Make a read-only database query
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 5 --retry-all-errors \
+            --connect-timeout 10 --max-time 30 \
+            --header "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+            --header "Accept: application/json" \
+            --output /dev/null \
+            "${SUPABASE_URL}/rest/v1/categories?select=id&limit=1"
+          echo "Supabase database query succeeded."
