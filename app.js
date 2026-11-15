@@ -160,11 +160,13 @@ function requestAuth(destination){
   try{sessionStorage.setItem('print3d-auth-return',destination)}catch(e){}
   document.body.classList.add('checkout-auth');
   document.querySelectorAll('.wrap')[0].style.display='';
+  root?.setAttribute("inert","");
   show('formCard');$('authCancel').classList.remove('hide');
   $('authCancel').textContent=lang==='ru'?'← Вернуться на сайт':'← Повернутися на сайт';
   $('fn').focus();
 }
 function closeAuth(){
+  root?.removeAttribute('inert');
   document.body.classList.remove('checkout-auth');
   document.querySelectorAll('.wrap')[0].style.display='none';
   $('authCancel').classList.add('hide');
@@ -203,25 +205,38 @@ const fixC=p=>p.colors&&p.colors.length===1?p.colors[0]:null;
 
 function head(){
   if(!hdr)return;
-  hdr.innerHTML=`<div class="logo" data-a="tab" data-n="home">${ic("cube")}Print3D</div>
-  <nav><button class="nl ${tab==="home"?"on":""}" data-a="tab" data-n="home">${a("home")}</button><button class="nl ${tab==="order"?"on":""}" data-a="new">${a("order")}</button><button class="nl ${tab==="chat"?"on":""}" data-a="tab" data-n="chat">${a("chat")}</button>${me.is_admin?`<button class="nl ${tab==="generators"?"on":""}" data-a="tab" data-n="generators">${lang==="ru"?"Генераторы":"Генератори"}</button>`:""}</nav>
-  <div class="ico"><button class="ib ${tab==="fav"?"on":""}" data-a="tab" data-n="fav">${ic("heart")}<i>${favs.size||""}</i></button>
-  <button class="ib ${tab==="cart"?"on":""}" data-a="tab" data-n="cart">${ic("cart")}<i>${cartN()||""}</i></button>
-  <button class="ib ${tab==="prof"?"on":""}" data-a="tab" data-n="prof">${ic("user")}</button>
-  <div class="lang"><button data-a="lang" data-l="uk">UA</button><button data-a="lang" data-l="ru">RU</button></div></div>`;
+  const dark=window.Print3DTheme.isDark();
+  const themeLabel=lang==='ru'?(dark?'Светлая тема':'Тёмная тема'):(dark?'Світла тема':'Темна тема');
+  hdr.innerHTML=`<button class="logo" data-a="tab" data-n="home" aria-label="Print3D — ${a("home")}">${ic("cube")}<span>Print3D</span></button>
+  <nav aria-label="${lang==='ru'?'Главное меню':'Головне меню'}"><button class="nl ${tab==="home"?"on":""}" data-a="browse">${a("cat")}</button><button class="nl ${tab==="order"?"on":""}" data-a="new">${lang==='ru'?'Индивидуальная печать':'Індивідуальний друк'}</button><button class="nl ${tab==="chat"?"on":""}" data-a="tab" data-n="chat">${a("chat")}</button>${me.is_admin?`<button class="nl ${tab==="generators"?"on":""}" data-a="tab" data-n="generators">${lang==="ru"?"Генераторы":"Генератори"}</button>`:""}</nav>
+  <div class="ico"><button class="ib ${tab==="fav"?"on":""}" data-a="tab" data-n="fav" aria-label="${a("fav")}" title="${a("fav")}">${ic("heart")}<i>${favs.size||""}</i></button>
+  <button class="ib ${tab==="cart"?"on":""}" data-a="tab" data-n="cart" aria-label="${a("cart")}" title="${a("cart")}">${ic("cart")}<i>${cartN()||""}</i></button>
+  <button class="ib ${tab==="prof"?"on":""}" data-a="tab" data-n="prof" aria-label="${a("prof")}" title="${a("prof")}">${ic("user")}</button>
+  <button class="ib theme-toggle" data-a="theme" aria-label="${themeLabel}" title="${themeLabel}" aria-pressed="${dark}"><img src="assets/icons/${dark?'sun':'moon'}.svg" alt="" width="24" height="24"></button>
+  <div class="lang" aria-label="${lang==='ru'?'Язык':'Мова'}"><button data-a="lang" data-l="uk">UA</button><button data-a="lang" data-l="ru">RU</button></div></div>`;
   hdr.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
 }
-const card=p=>`<div class="pcard glass" data-a="open" data-id="${p.id}"><button class="hb ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}">${ic("heart")}</button>
-<div class="pimg">${p.image?`<img src="${esc(p.image)}" loading="lazy">`:ic("cube")}</div><b>${esc(p.title)}</b>
+const card=p=>`<div class="pcard glass" data-a="open" data-id="${p.id}"><button class="hb ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button>
+<div class="pimg">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`:ic("cube")}</div><b>${esc(p.title)}</b>
 <span class="mut">${esc([p.plastic,p.grams?p.grams+" г":""].filter(Boolean).join(" · "))||"&nbsp;"}</span>
-<div class="rw"><b class="pr">${p.price!=null?p.price+" грн":""}</b><button class="cb" data-a="qadd" data-id="${p.id}">${ic("cart")}</button></div></div>`;
+<div class="rw"><b class="pr">${p.price!=null?p.price+" грн":""}</b><button class="cb" data-a="qadd" data-id="${p.id}" aria-label="${a("addCart")}: ${esc(p.title)}">${ic("cart")}</button></div></div>`;
 const grid=l=>l.length?`<div class="grid">${l.map(card).join("")}</div>`:`<p class="mut">${a("empty")}</p>`;
 const catBlock=()=>`<div class="pills"><button class="chip ${fcat==null?"on":""}" data-a="cf" data-n="">${a("all")}</button>${D.cats.map(c=>`<button class="chip ${fcat==c.id?"on":""}" data-a="cf" data-n="${c.id}">${esc(c.name)}</button>`).join("")}</div>${grid(D.products.filter(p=>fcat==null||p.category_id==fcat))}`;
-const home=()=>`<section class="hero"><div class="hl glass"><span class="pill">${a("tag")}</span><h1>${a("h1a")}<br><b>${a("h1b")}</b></h1><p>${a("heroP")}</p>
-<button class="btn" data-a="goto" data-n="catalog">${a("toCat")} →</button></div>
-<div class="hd"><img src="dragon.png" alt="" onerror="this.parentNode.remove()"></div></section>
-<div class="steps">${[1,2,3,4].map(i=>`<div class="step glass"><span>${i}</span>${a("s"+i)}</div>`).join("")}</div>
-<section id="catalog"><h2>${a("cat")}</h2><div id="cg">${catBlock()}</div></section>`;
+const premiumExamples=[
+  {key:'vase',uk:'Вази',ru:'Вазы',title:['Ваза','Ваза'],descr:['Стильні форми для інтер’єру та особливого настрою.','Стильные формы для интерьера и особого настроения.']},
+  {key:'organizer',uk:'Органайзери',ru:'Органайзеры',title:['Органайзер','Органайзер'],descr:['Практичні рішення для порядку на робочому місці.','Практичные решения для порядка на рабочем месте.']},
+  {key:'stand',uk:'Підставки',ru:'Подставки',title:['Підставка','Подставка'],descr:['Зручні аксесуари для телефона на щодень.','Удобные аксессуары для телефона на каждый день.']}
+];
+const arrow=()=>'<img class="arrow-icon" src="assets/icons/arrow-right.svg" alt="" width="28" height="28">';
+const home=()=>`<section class="premium-hero" aria-labelledby="hero-title">
+<img class="hero-photo" src="assets/premium-hero.webp" alt="${lang==='ru'?'Ребристая ваза — пример 3D-печати':'Ребриста ваза — приклад 3D-друку'}" fetchpriority="high" width="1600" height="900">
+<div class="hero-copy"><h1 id="hero-title">${lang==='ru'?'Вещи с<br>характером':'Речі з<br>характером'}<span>.</span></h1><p>${a('heroP')}</p><button class="btn hero-cta" data-a="goto" data-n="catalog">${lang==='ru'?'Посмотреть каталог':'Переглянути каталог'} ${arrow()}</button></div></section>
+<section id="catalog" class="example-section"><div class="section-heading"><h2>${a('cat')}</h2><span>${lang==='ru'?'Примеры изделий':'Приклади виробів'}</span></div>
+<div class="example-grid">${premiumExamples.map((x,i)=>`<button class="example-card" data-a="idea" data-n="${i}" aria-label="${lang==='ru'?'Запросить печать: ':'Замовити друк: '}${lang==='ru'?x.ru:x.uk}"><img src="assets/premium-${x.key}.webp" alt="${lang==='ru'?x.ru:x.uk}" loading="lazy" width="900" height="900"><span class="example-title">${lang==='ru'?x.ru:x.uk}${arrow()}</span><span class="example-description">${x.descr[lang==='ru'?1:0]}</span></button>`).join('')}</div>
+<p class="example-note">${lang==='ru'?'Иллюстрации для вдохновения. Возможность изготовления и стоимость согласуем в чате.':'Ілюстрації для натхнення. Можливість виготовлення та вартість погодимо в чаті.'}</p></section>
+<section id="products" class="actual-catalog"><div class="section-heading"><h2>${lang==='ru'?'Товары в каталоге':'Товари в каталозі'}</h2></div><div id="cg">${catBlock()}</div></section>
+<section class="how-section"><h2>${a('how')}</h2><div class="steps">${[1,2,3,4].map(i=>`<div class="step"><span>0${i}</span><p>${a('s'+i)}</p></div>`).join('')}</div><button class="btn ghost" data-a="new">${a('order')} ${arrow()}</button></section>
+<footer class="store-footer"><span>Print3D</span><p>${lang==='ru'?'От идеи — к вашей вещи.':'Від ідеї — до вашої речі.'}</p><button class="link" data-a="tab" data-n="chat">${a('chat')}</button><button class="link" data-a="privacy">${lang==='ru'?'Конфиденциальность':'Конфіденційність'}</button></footer>`;
 const favView=()=>`<h2>${a("fav")}</h2>`+(favs.size?grid(D.products.filter(p=>favs.has(p.id))):`<p class="mut">${a("favEmpty")}</p>`);
 let chatUid=null,chatSig="";
 const seenGet=u=>+localStorage.getItem("seen:"+u)||0;
@@ -462,7 +477,7 @@ async function render(){
   if(tab==="generators"&&!me.is_admin)tab="home";
   const epoch=++renderEpoch,key=[tab,sub,asub,generatorKind].join(':'),previousNumbers=Print3DMotion.captureNumbers(view);
   window.Print3DStudio?.dispose();window.Print3DFlexiEditor?.dispose();clearTimeout(orgTimer);if(orgViewer)orgViewer.dispose();
-  head();let h="";
+  root.dataset.page=tab;head();let h="";
   try{
     if(tab==="home")h=home();else if(tab==="order")h=orderForm(D.products.find(p=>p.id==oopen));
     else if(tab==="generators")h=generatorTabs()+(generatorKind==='organizer'?organizerHTML():generatorKind==='flexi'?window.Print3DFlexiEditor.html():window.Print3DStudio.html(generatorKind));
@@ -493,7 +508,7 @@ function openProduct(id,source){
   <div class="stats">${p.price!=null?`<span class="stat">${ic("tag")}${p.price} грн</span>`:""}${p.print_minutes?`<span class="stat">${ic("clock")}${fmt(p.print_minutes)}</span>`:""}${p.grams?`<span class="stat">${ic("wt")}${p.grams} г</span>`:""}</div>
   ${D.plastics.length||p.plastic?`<div class="lb">${a("material")}</div>${mat}<p class="mut" id="mpd">${esc(pl?pl.descr||"":"")}</p>`:""}
   ${cl.length?`<div class="lb">${a("color")}</div>${col}`:""}
-  <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}">${ic("heart")}</button></div>
+  <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button></div>
   </div></div>`;
   showModal(source,true);
 }
@@ -724,6 +739,10 @@ async function onClick(e){
   const k=b.dataset.a,id=b.dataset.id,n=b.dataset.n;
   if(!user&&["send","checkout"].includes(k))return requestAuth(k==="send"?"order":"cart");
   if(!user&&["msg","phone","delo","addp","delp","addcat","delcat","addc","stock","delc","addpl","delpl","editp","asub"].includes(k))return;
+  if(k==="theme"){window.Print3DTheme.toggle();head();return}
+  if(k==="browse"){await go('home');document.getElementById('catalog')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return}
+  if(k==="privacy")return $('dlg').showModal();
+  if(k==="idea"){const example=premiumExamples[+n];if(!example)return;oopen=null;await go('order');document.getElementById('o-t').value=example.title[lang==='ru'?1:0];return}
   if(k==="tab")return go(n);
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
@@ -824,8 +843,7 @@ async function onChange(e){
 function initBackground(){
  if(bub)return;document.body.classList.add('bg-ready');
  bub=document.createElement('div');bub.id='bubbles';bub.setAttribute('aria-hidden','true');document.body.appendChild(bub);
- const dispose=Print3DLava.mount(bub);
- window.addEventListener('pagehide',e=>{if(!e.persisted)dispose()});
+ // Premium storefront uses a quiet static surface; the former lava canvas stays unmounted.
 }
 window.openApp=async()=>{
   if(recovering)return;
