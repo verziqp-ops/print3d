@@ -113,6 +113,7 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
     </div>
   </div>
 
+  <button type="button" class="link hide" id="authCancel">← Повернутися на сайт</button>
   <div class="card" id="formCard">
     <h1 data-t="title"></h1>
     <p class="sub" data-t="sub"></p>
@@ -306,7 +307,7 @@ if(sb){
     $("loginBtn").classList.toggle("hide",!!user);
     $("logoutBtn").classList.toggle("hide",!user);
     if(ev==="PASSWORD_RECOVERY"){recovering=true;show("newPassCard")}
-    else if(ev==="SIGNED_OUT"){recovering=false;window.closeApp&&closeApp();show("formCard")}
+    else if(ev==="SIGNED_OUT"){recovering=false;window.openApp?openApp():show("formCard")}
     else if(user&&!recovering){
       const m=user.user_metadata||{};
       $("who").textContent=((m.first_name||"")+" "+(m.last_name||"")).trim()||user.email;
@@ -351,6 +352,6 @@ setLang(lang);
 <script src="generator-sliders.js?v=20261004-sliders35"></script>
 <script src="hf-generation.js?v=20261004-hf43"></script>
 <script src="flexi-editor.js?v=20261004-flexi43"></script>
-<script src="app.js?v=20261004-flexi40"></script>
+<script src="app.js?v=20261115-guest-checkout1"></script>
 </body>
 </html>

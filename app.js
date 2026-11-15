@@ -42,6 +42,9 @@ const saveCart=()=>{try{localStorage.setItem("cart",JSON.stringify(cart))}catch(
 const css=document.createElement("style");
 css.textContent=`
 :root{--f:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--sp:cubic-bezier(.34,1.56,.64,1)}
+body.app-on.checkout-auth>.wrap:first-of-type{display:block!important;position:fixed;inset:0;z-index:50;width:100%;max-width:none!important;overflow-y:auto;background:rgba(8,6,5,.96);padding:24px 16px!important}
+body.checkout-auth>.wrap:first-of-type>.top,body.checkout-auth #formCard,body.checkout-auth #doneCard{max-width:420px;margin:0 auto 16px}
+body.checkout-auth #authCancel{display:block;margin:0 auto 16px;min-height:44px}
 body.app-on{--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.58);--line:rgba(255,255,255,.1);--field:rgba(255,255,255,.07);--accent:#ff8a1f;display:block;padding:0;background:#080605;color:var(--text)}
 .app-on .blob,.bg-ready .blob{display:none}.app-on .wrap{max-width:1200px!important;margin:0 auto!important;padding:0 16px}
 body.bg-ready:not(.app-on){--bg:#080605;--bg2:#1a0d04;--text:#f5ece2;--muted:#a8998a;--card:rgba(20,15,11,.78);--line:rgba(255,255,255,.1);--field:#19120d;--accent:#ff8a1f;background:#080605}
@@ -146,11 +149,36 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 @media (prefers-reduced-motion:reduce){#view>*,.bub,.bub::after,.hd img,#bg-filament{animation:none}#bg-spot{display:none}}`;
 document.head.appendChild(css);
 
+let pendingAuth=null,orderDraft=null;
+try{pendingAuth=sessionStorage.getItem('print3d-auth-return');orderDraft=JSON.parse(sessionStorage.getItem('print3d-order-draft')||'null')}catch(e){}
+function requestAuth(destination){
+  pendingAuth=destination;
+  if(destination==='order'){
+    orderDraft={title:val('o-t'),descr:val('o-d'),selection:{...osel},hasFiles:!!(fil('o-i')||fil('o-f'))};
+    try{sessionStorage.setItem('print3d-order-draft',JSON.stringify(orderDraft))}catch(e){}
+  }
+  try{sessionStorage.setItem('print3d-auth-return',destination)}catch(e){}
+  document.body.classList.add('checkout-auth');
+  document.querySelectorAll('.wrap')[0].style.display='';
+  show('formCard');$('authCancel').classList.remove('hide');
+  $('authCancel').textContent=lang==='ru'?'← Вернуться на сайт':'← Повернутися на сайт';
+  $('fn').focus();
+}
+function closeAuth(){
+  document.body.classList.remove('checkout-auth');
+  document.querySelectorAll('.wrap')[0].style.display='none';
+  $('authCancel').classList.add('hide');
+}
+$('authCancel').onclick=()=>{stopPoll();closeAuth()};
+function clearAuthReturn(){
+  pendingAuth=null;orderDraft=null;
+  try{sessionStorage.removeItem('print3d-auth-return');sessionStorage.removeItem('print3d-order-draft')}catch(e){}
+}
 async function load(){
-  const [p,c,pl,pr,ca,fv]=await Promise.all([sb.from("profiles").select("*").eq("id",user.id).single(),
+  const [p,c,pl,pr,ca,fv]=await Promise.all([user?sb.from("profiles").select("*").eq("id",user.id).single():Promise.resolve({data:null}),
     sb.from("colors").select("*").order("id"),sb.from("plastics").select("*").order("id"),
     sb.from("products").select("*").order("id",{ascending:false}),sb.from("categories").select("*").order("id"),
-    sb.from("favorites").select("product_id")]);
+    user?sb.from("favorites").select("product_id"):Promise.resolve({data:[]})]);
   me=p.data||{};D={colors:c.data||[],plastics:pl.data||[],products:pr.data||[],cats:ca.data||[]};
   favs=new Set((fv.data||[]).map(x=>x.product_id));
 }
@@ -222,7 +250,7 @@ async function chatView(){
   return `<h2>${a("chat")}</h2><div class="cw ${chatUid?"has":""}"><div class="card2 clist glass" id="clist">${list}</div><div class="cth">${chatUid?`<button class="link back" data-a="threads">${a("backChats")}</button>`:""}${th}</div></div>`;
 }
 async function pollChat(force){
-  if(tab!=="chat")return;
+  if(!user||tab!=="chat")return;
   if(me.is_admin){const cl=document.getElementById("clist");if(cl){const h=await adminList();if(cl.innerHTML!==h)cl.innerHTML=h}}
   if(!chatUid||!document.getElementById("msgs"))return;
   const {data}=await sb.from("messages").select("*").eq("user_id",chatUid).order("id");
@@ -683,16 +711,19 @@ function addToCart(p,pl,co){
 async function toggleFav(pid,source){
   const on=favs.has(pid);on?favs.delete(pid):favs.add(pid);
   document.querySelectorAll(`[data-a=fav][data-id="${pid}"]`).forEach(x=>x.classList.toggle("on",!on));head();Print3DMotion.favorite(source,!on);Print3DMotion.bounce(document.querySelector(".ib[data-n=fav]"));
+  if(!user){try{localStorage.setItem("guest-favorites",JSON.stringify([...favs]))}catch(e){}if(tab==="fav")render();return}
   const r=on?await sb.from("favorites").delete().eq("product_id",pid).eq("user_id",user.id):await sb.from("favorites").insert({product_id:pid});
   if(r.error){on?favs.add(pid):favs.delete(pid);render()}else if(tab==="fav")render();
 }
 const run=async fn=>{try{await fn()}catch(e){console.error(e);alert(a("err"))}};
 const refresh=async()=>{await load();await render()};
-const go=async t=>{if(t==="generators"&&!me.is_admin)return;closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
+const go=async t=>{if(!user&&["prof","chat"].includes(t))return requestAuth(t);if(t==="generators"&&!me.is_admin)return;closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
 
 async function onClick(e){
   const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.type==="file")return;
   const k=b.dataset.a,id=b.dataset.id,n=b.dataset.n;
+  if(!user&&["send","checkout"].includes(k))return requestAuth(k==="send"?"order":"cart");
+  if(!user&&["msg","phone","delo","addp","delp","addcat","delcat","addc","stock","delc","addpl","delpl","editp","asub"].includes(k))return;
   if(k==="tab")return go(n);
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
@@ -797,6 +828,9 @@ function initBackground(){
  window.addEventListener('pagehide',e=>{if(!e.persisted)dispose()});
 }
 window.openApp=async()=>{
+  if(recovering)return;
+  const preserveOrder=!!(user&&tab==="order"&&document.getElementById("o-t"));
+  closeAuth();
   CARDS.forEach(x=>$(x).classList.add("hide"));
   if(!root){
     root=document.createElement("div");root.id="app";root.innerHTML='<header class="hdr glass" id="hdr"></header><main id="view"></main>';
@@ -814,14 +848,29 @@ window.openApp=async()=>{
   }
   document.body.classList.add("app-on");document.querySelectorAll(".wrap")[0].style.display="none";
   root.classList.remove("hide");bub.style.display="";help.style.display="";
-  await load();tab="home";await render();
+  await load();
+  if(!user){try{favs=new Set(JSON.parse(localStorage.getItem('guest-favorites')||'[]'))}catch(e){}tab='home'}
+  else if(pendingAuth){tab=pendingAuth}
+  if(preserveOrder){head()}
+  else{
+    await render();
+    if(user&&tab==='order'&&orderDraft){
+      document.getElementById('o-t').value=orderDraft.title;
+      document.getElementById('o-d').value=orderDraft.descr;
+      osel=orderDraft.selection;
+      if(orderDraft.hasFiles)document.getElementById('o-e').textContent=lang==='ru'?'После перехода для входа выберите файлы заново.':'Після переходу для входу виберіть файли повторно.';
+      document.querySelectorAll('[data-a="pl"],[data-a="co"]').forEach(b=>b.classList.toggle('on',b.dataset.n===osel[b.dataset.a==='pl'?'plastic':'color']));
+    }
+  }
+  if(user){clearAuthReturn()}
+
 };
 window.closeApp=()=>{
   if(!root)return;
   root.classList.add("hide");help.style.display="none";closeModal();
   document.body.classList.remove("app-on");document.querySelectorAll(".wrap")[0].style.display="";
 };
-const sl=window.setLang;window.setLang=l=>{sl(l);if(root&&user&&!root.classList.contains("hide"))render()};
+const sl=window.setLang;window.setLang=l=>{sl(l);if(root&&!root.classList.contains("hide")&&!document.body.classList.contains("checkout-auth"))render()};
 initBackground();
-if(user)openApp();
+if(!recovering)openApp();
 })();
