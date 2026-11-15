@@ -3,7 +3,7 @@ const S={
 home:["Головна","Главная"],order:["Замовити друк","Заказать печать"],cat:["Каталог","Каталог"],all:["Усі товари","Все товары"],
 fav:["Обране","Избранное"],cart:["Кошик","Корзина"],prof:["Профіль","Профиль"],adm:["Адмінка","Админка"],
 tag:["3D-друк — це реальність","3D-печать — это реальность"],h1a:["Ваші ідеї","Ваши идеи"],h1b:["у 3D","в 3D"],
-heroP:["Друкуємо деталі на замовлення: обирайте готові моделі або надішліть своє фото чи креслення.","Печатаем детали на заказ: выбирайте готовые модели или присылайте своё фото или чертёж."],
+heroP:["3D-друк на замовлення: обирайте готові моделі або надсилайте свою ідею для виготовлення.","3D-печать на заказ: выбирайте готовые модели или присылайте свою идею для изготовления."],
 toCat:["Перейти до каталогу","Перейти в каталог"],more:["Дізнатися більше","Узнать больше"],how:["Як це працює","Как это работает"],
 s1:["Оберіть модель або запропонуйте свою","Выберите модель или предложите свою"],s2:["Погоджуємо ціну й розміри в чаті","Согласуем цену и размеры в чате"],
 s3:["Стежте за друком у профілі","Следите за печатью в профиле"],s4:["Отримайте готову деталь","Получите готовую деталь"],
@@ -229,7 +229,7 @@ const premiumExamples=[
 ];
 const arrow=()=>'<img class="arrow-icon" src="assets/icons/arrow-right.svg" alt="" width="28" height="28">';
 const home=()=>`<section class="premium-hero" aria-labelledby="hero-title">
-<img class="hero-photo" src="assets/premium-hero.webp" alt="${lang==='ru'?'Ребристая ваза — пример 3D-печати':'Ребриста ваза — приклад 3D-друку'}" fetchpriority="high" width="1600" height="900">
+<img class="hero-photo" src="assets/premium-hero.webp?v=2" alt="${lang==='ru'?'Ребристая ваза — пример 3D-печати':'Ребриста ваза — приклад 3D-друку'}" fetchpriority="high" width="1600" height="900">
 <div class="hero-copy"><h1 id="hero-title">${lang==='ru'?'Вещи с<br>характером':'Речі з<br>характером'}<span>.</span></h1><p>${a('heroP')}</p><button class="btn hero-cta" data-a="goto" data-n="catalog">${lang==='ru'?'Посмотреть каталог':'Переглянути каталог'} ${arrow()}</button></div></section>
 <section id="catalog" class="example-section"><div class="section-heading"><h2>${a('cat')}</h2><span>${lang==='ru'?'Примеры изделий':'Приклади виробів'}</span></div>
 <div class="example-grid">${premiumExamples.map((x,i)=>`<button class="example-card" data-a="idea" data-n="${i}" aria-label="${lang==='ru'?'Запросить печать: ':'Замовити друк: '}${lang==='ru'?x.ru:x.uk}"><img src="assets/premium-${x.key}.webp" alt="${lang==='ru'?x.ru:x.uk}" loading="lazy" width="900" height="900"><span class="example-title">${lang==='ru'?x.ru:x.uk}${arrow()}</span><span class="example-description">${x.descr[lang==='ru'?1:0]}</span></button>`).join('')}</div>
