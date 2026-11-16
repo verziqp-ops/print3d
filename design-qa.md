@@ -40,3 +40,15 @@ No actionable P0/P1/P2 visual findings remain. Expected product constraints: UA/
 - [x] Previous deployed source retained in backup/before-premium-redesign-2026-11-15.
 
 final result: passed
+
+## 2026-11-16 — slate refinement and mobile repair
+
+- Replaced terracotta accents with slate, removed sample products from homepage, retained actual catalog and admin generators.
+- Refined conversations, product studio presentation, existing G-code viewer controls/metrics and bilingual privacy policy. G-code parsing and timing functions were preserved.
+- Fixed the hero's intrinsic aspect-ratio/min-height width transfer; public browser measurements at 390 and 980 px show no horizontal page overflow.
+- Full-bleed header, shared in-flow sticky Close row for product/order/photo sheets, no floating help widget, matching favorite/cart actions (36×36 px mobile, transparent backgrounds).
+- Product photo stage follows actual image ratio; verified image and stage both 217.8 px tall on mobile. Price and secondary manufacturing details now have separate visual hierarchy.
+- Public live browser verified theme switching, product opening/closing, no floating help, matching actions, complete photo, and mobile modal layout. Visual screenshots reviewed at 390×844.
+- 68 automated tests passed, including auth/checkout guards, G-code geometry/timing and presentation helpers. No production customer/account/order records were changed during QA.
+- Remote browser has WebGL disabled. Three.js module and real product model loaded, but full GPU rendering could not be validated there; graceful photo fallback displayed. Private admin/chat workflows were not exercised with a signed-in account.
+- Backup branch: backup/before-chat-viewer-refinement-2026-11-16.

@@ -132,3 +132,4 @@ body #modal .product-actions .ib.on{color:var(--accent);background:var(--panel);
 body #modal .product-actions .btn{background:var(--accent);color:var(--bg);border:1px solid var(--accent)}
 body #modal .image-sheet .modal-bar{margin-bottom:14px}
 @media(max-width:640px){#app .pcard .rw{flex-wrap:wrap;gap:10px}#app .card-actions{gap:5px}#app .card-actions .hb,#app .card-actions .cb{width:36px;min-width:36px;height:36px}body #modal .product-sheet{border-radius:12px;gap:18px}.product-sheet h2{font-size:28px}body #modal .product-viewer{border-radius:8px}body #modal .product-sheet .mut{font-size:13px;line-height:1.6}}
+body:has(#modal.show){overflow:hidden}
