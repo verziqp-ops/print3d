@@ -7,6 +7,7 @@ body,body.app-on,body.bg-ready{width:100%;min-width:0;--accent:#586c83;--stage:#
 html[data-theme="dark"] body,html[data-theme="dark"] body.app-on,html[data-theme="dark"] body.bg-ready{--accent:#9bafc2;--stage:#242a30;background:var(--bg)}
 body.app-on>.wrap{width:100%!important;min-width:0;box-sizing:border-box}
 #app,#view{width:100%;min-width:0;max-width:100%}
+#app .premium-hero{aspect-ratio:auto}
 #app .hero-copy h1 span{color:#586c83}
 #app .arrow-icon{filter:invert(39%) sepia(16%) saturate(665%) hue-rotate(173deg) brightness(94%) contrast(88%)}
 html[data-theme="dark"] #app .arrow-icon{filter:invert(77%) sepia(9%) saturate(579%) hue-rotate(169deg) brightness(91%) contrast(90%)}
@@ -106,3 +107,28 @@ body.privacy-page{display:block;padding:0;font-family:var(--f);background:var(--
 }
 @media(max-width:380px){#app .hero-copy h1{font-size:clamp(49px,16vw,60px)}#app .hdr .logo{font-size:26px}#app .ico{margin-left:4px}#app .ib{width:29px}#app .hdr nav{gap:5px}#app .nl{font-size:11px}.process-metrics strong{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.m{animation:none!important}}
+/* Shared action language and full-bleed navigation. */
+#app .hdr{box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax);isolation:isolate}
+#app .hdr.scroll-hidden{transform:none;opacity:1;pointer-events:auto}
+#app .pcard:hover{transform:none}#app .pcard .pimg img{transform:none}
+#app .card-actions{display:flex;gap:6px;margin-left:auto}
+#app .card-actions .hb,#app .card-actions .cb{position:static;display:grid;place-items:center;width:40px;height:40px;min-width:40px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);box-shadow:none;transform:none}
+#app .card-actions .hb.on{background:var(--panel);color:var(--accent);border-color:var(--accent)}
+#app .card-actions svg{width:21px;height:21px;stroke-width:1.6}
+body #modal .sheet{gap:20px}
+body #modal .modal-bar{grid-column:1/-1;display:flex;justify-content:flex-end;position:sticky;top:0;z-index:5;background:var(--card);padding:0 0 10px;border-bottom:1px solid var(--line);align-self:start}
+body #modal .modal-close{position:static;display:block;min-height:40px;padding:8px 14px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:500 13px var(--f);cursor:pointer}
+body #modal .product-viewer .media[data-mode="photo"]{aspect-ratio:auto;min-height:0;height:auto}
+body #modal .product-viewer .media[data-mode="photo"] img{display:block;position:static;width:100%;height:auto;max-height:none;object-fit:contain}
+body #modal .chip{border-radius:7px;background:transparent;border:1px solid var(--line);padding:9px 12px;box-shadow:none;color:var(--text)}
+body #modal .chip.on{background:var(--panel);color:var(--text);border-color:var(--accent)}
+body #modal .product-sheet .stats{gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0 24px}
+body #modal .product-price{flex-basis:100%;font:500 26px var(--f);color:var(--text)}
+body #modal .product-sheet .stat{border:0;background:none;padding:0;border-radius:0;color:var(--muted);font-size:12px}
+body #modal .product-actions{align-items:stretch;gap:10px}
+body #modal .product-actions .btn,body #modal .product-actions .ib{min-height:48px;border-radius:7px}
+body #modal .product-actions .ib{width:48px;min-width:48px;border:1px solid var(--line);background:transparent;color:var(--text);box-shadow:none}
+body #modal .product-actions .ib.on{color:var(--accent);background:var(--panel);border-color:var(--accent)}
+body #modal .product-actions .btn{background:var(--accent);color:var(--bg);border:1px solid var(--accent)}
+body #modal .image-sheet .modal-bar{margin-bottom:14px}
+@media(max-width:640px){#app .pcard .rw{flex-wrap:wrap;gap:10px}#app .card-actions{gap:5px}#app .card-actions .hb,#app .card-actions .cb{width:36px;min-width:36px;height:36px}body #modal .product-sheet{border-radius:12px;gap:18px}.product-sheet h2{font-size:28px}body #modal .product-viewer{border-radius:8px}body #modal .product-sheet .mut{font-size:13px;line-height:1.6}}

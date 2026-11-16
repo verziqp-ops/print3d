@@ -34,7 +34,7 @@ x:'<path d="M6 6l12 12M18 6 6 18"/>',clock:'<circle cx="12" cy="12" r="9"/><path
 tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/>',wt:'<path d="M6 8h12l2 12H4z"/><circle cx="12" cy="5" r="2"/>',
 up:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>'};
 const ic=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
-let me={},D={},favs=new Set(),tab="home",sub="info",asub="orders",fcat=null,fcl="",editId=null,oopen=null,osel={},msel={},root,view,hdr,help,bub,modal;
+let me={},D={},favs=new Set(),tab="home",sub="info",asub="orders",fcat=null,fcl="",editId=null,oopen=null,osel={},msel={},root,view,hdr,bub,modal;
 let cart=[];try{cart=JSON.parse(localStorage.getItem("cart")||"[]")}catch(e){}
 const cartN=()=>cart.reduce((s,x)=>s+x.qty,0);
 const saveCart=()=>{try{localStorage.setItem("cart",JSON.stringify(cart))}catch(e){}head()};
@@ -216,10 +216,10 @@ function head(){
   <div class="lang" aria-label="${lang==='ru'?'Язык':'Мова'}"><button data-a="lang" data-l="uk">UA</button><button data-a="lang" data-l="ru">RU</button></div></div>`;
   hdr.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===lang));
 }
-const card=p=>`<div class="pcard glass" data-a="open" data-id="${p.id}"><button class="hb ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button>
-<div class="pimg">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`:ic("cube")}</div><b>${esc(p.title)}</b>
+const card=p=>`<div class="pcard glass" data-a="open" data-id="${p.id}">
+<div class="pimg">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" draggable="false">`:ic("cube")}</div><b>${esc(p.title)}</b>
 <span class="mut">${esc([p.plastic,p.grams?p.grams+" г":""].filter(Boolean).join(" · "))||"&nbsp;"}</span>
-<div class="rw"><b class="pr">${p.price!=null?p.price+" грн":""}</b><button class="cb" data-a="qadd" data-id="${p.id}" aria-label="${a("addCart")}: ${esc(p.title)}">${ic("cart")}</button></div></div>`;
+<div class="rw"><b class="pr">${p.price!=null?p.price+" грн":""}</b><div class="card-actions"><button class="hb ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button><button class="cb" data-a="qadd" data-id="${p.id}" aria-label="${a("addCart")}: ${esc(p.title)}">${ic("cart")}</button></div></div></div>`;
 const grid=l=>l.length?`<div class="grid">${l.map(card).join("")}</div>`:`<p class="mut">${a("empty")}</p>`;
 const catBlock=()=>`<div class="pills"><button class="chip ${fcat==null?"on":""}" data-a="cf" data-n="">${a("all")}</button>${D.cats.map(c=>`<button class="chip ${fcat==c.id?"on":""}" data-a="cf" data-n="${c.id}">${esc(c.name)}</button>`).join("")}</div>${grid(D.products.filter(p=>fcat==null||p.category_id==fcat))}`;
 const arrow=()=>'<img class="arrow-icon" src="assets/icons/arrow-right.svg" alt="" width="28" height="28">';
@@ -494,11 +494,10 @@ async function render(){
   if(tab==="generators"&&me.is_admin){if(generatorKind==='organizer')mountOrganizer();else if(generatorKind==='flexi')window.Print3DFlexiEditor.mount(load3);else window.Print3DStudio.mount(generatorKind,load3)}
   updateHeaderScroll(true);
   const mb=document.getElementById("msgs");if(mb)mb.scrollTop=mb.scrollHeight;
-  help.querySelector("b").textContent=a("help");help.querySelector("small").textContent=a("helpS");
 }
 
 let modalEpoch=0,productMorph=false;
-function showModal(source,morph=false){modalEpoch++;productMorph=morph;modal.classList.add('show');(morph?Print3DMotion.open:Print3DMotion.simpleOpen)(modal.querySelector('.sheet'),source)}
+function showModal(source,morph=false){const sheet=modal.querySelector('.sheet'),close=sheet?.querySelector(':scope > button.x');if(close){const bar=document.createElement('div');bar.className='modal-bar';close.className='modal-close';close.textContent=lang==='ru'?'Закрыть':'Закрити';close.setAttribute('aria-label',close.textContent);bar.appendChild(close);sheet.prepend(bar)}modalEpoch++;productMorph=morph;modal.classList.add('show');(morph?Print3DMotion.open:Print3DMotion.simpleOpen)(modal.querySelector('.sheet'),source)}
 function closeModal(){if(!modal||!modal.classList.contains('show'))return;const epoch=++modalEpoch;const animation=(productMorph?Print3DMotion.close:Print3DMotion.simpleClose)(modal.querySelector('.sheet'));const clear=()=>{if(epoch!==modalEpoch)return;modal.classList.remove('show');modal.innerHTML=''};if(animation)animation.finished.then(clear).catch(()=>{});else clear()}
 
 function openProduct(id,source){
@@ -508,12 +507,12 @@ function openProduct(id,source){
   const mat=p.plastic?`<div class="chips"><span class="chip on">${esc(p.plastic)}</span></div>`:`<div class="chips">${D.plastics.map(x=>`<button class="chip" data-a="mpl" data-n="${esc(x.name)}">${esc(x.name)}</button>`).join("")}</div>`;
   const cl=pcols(p);const col=fc?`<div class="chips"><span class="chip on"><i style="background:${esc(colHex(fc))}"></i>${esc(fc)}</span></div>`:`<div class="chips">${cl.map(c=>`<button class="chip" data-a="mco" data-n="${esc(c.name)}"><i style="background:${esc(c.hex)}"></i>${esc(c.name)}</button>`).join("")}</div>`;
   modal.innerHTML=`<div class="sheet glass product-sheet"><button class="x" data-a="close" aria-label="${a("cancel")}">${ic("x")}</button>
-  <div class="mw product-viewer"><div class="media model-stage" id="media">${photoHTML(p)}</div>${p.model?`<div class="mt"><button class="chip on" data-a="mph" data-id="${p.id}">${a("photoT")}</button><button class="chip" data-a="m3d" data-id="${p.id}">3D</button></div><div class="model-tools" hidden><button type="button" data-a="model-fit">${lang==='ru'?'Ракурс':'Ракурс'}</button><button type="button" data-a="model-top">${lang==='ru'?'Сверху':'Зверху'}</button><button type="button" data-a="model-side">${lang==='ru'?'Сбоку':'Збоку'}</button><button type="button" data-a="model-full">${lang==='ru'?'На весь экран':'На весь екран'}</button></div><p class="model-dimensions" role="status"></p>`:""}</div>
+  <div class="mw product-viewer"><div class="media model-stage" id="media" data-mode="photo">${photoHTML(p)}</div>${p.model?`<div class="mt"><button class="chip on" data-a="mph" data-id="${p.id}">${a("photoT")}</button><button class="chip" data-a="m3d" data-id="${p.id}">3D</button></div><div class="model-tools" hidden><button type="button" data-a="model-fit">${lang==='ru'?'Ракурс':'Ракурс'}</button><button type="button" data-a="model-top">${lang==='ru'?'Сверху':'Зверху'}</button><button type="button" data-a="model-side">${lang==='ru'?'Сбоку':'Збоку'}</button><button type="button" data-a="model-full">${lang==='ru'?'На весь экран':'На весь екран'}</button></div><p class="model-dimensions" role="status"></p>`:""}</div>
   <div><h2>${esc(p.title)}</h2>${p.descr?`<p class="mut">${esc(p.descr)}</p>`:""}
-  <div class="stats">${p.price!=null?`<span class="stat">${ic("tag")}${p.price} грн</span>`:""}${p.print_minutes?`<span class="stat">${ic("clock")}${fmt(p.print_minutes)}</span>`:""}${p.grams?`<span class="stat">${ic("wt")}${p.grams} г</span>`:""}</div>
+  <div class="stats">${p.price!=null?`<strong class="product-price">${p.price} грн</strong>`:""}${p.print_minutes?`<span class="stat">${ic("clock")}${fmt(p.print_minutes)}</span>`:""}${p.grams?`<span class="stat">${ic("wt")}${p.grams} г</span>`:""}</div>
   ${D.plastics.length||p.plastic?`<div class="lb">${a("material")}</div>${mat}<p class="mut" id="mpd">${esc(pl?pl.descr||"":"")}</p>`:""}
   ${cl.length?`<div class="lb">${a("color")}</div>${col}<p class="mut model-color-note" id="model-color-note">${fc?esc(fc):(lang==='ru'?'Выберите цвет. Нейтральное 3D-превью не задаёт цвет заказа.':'Оберіть колір. Нейтральне 3D-прев’ю не задає колір замовлення.')}</p>`:""}
-  <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button></div>
+  <div class="rw product-actions" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button></div>
   </div></div>`;
   showModal(source,true);
 }
@@ -627,7 +626,7 @@ async function gview(box,url,o){
     box.innerHTML=`<div class="process-heading"><div><span class="viewer-eyebrow">G-CODE / ${lang==='ru'?'ВИЗУАЛИЗАЦИЯ':'ВІЗУАЛІЗАЦІЯ'}</span><h3>${lang==='ru'?'Просмотр печати':'Перегляд друку'}</h3></div><button class="chip" id="g-full">${lang==='ru'?'На весь экран':'На весь екран'}</button></div>
     <div class="g-modes"><button class="chip on" id="gm">${lang==='ru'?'Слои':'Шари'}</button><button class="chip" id="gl2" ${!o.started?'disabled':''}>${lang==='ru'?'По времени запуска':'За часом запуску'}</button></div>
     <div class="g3box"></div><div class="g-camera"><button class="chip" id="g-iso">3D</button><button class="chip" id="g-top">${lang==='ru'?'Сверху':'Зверху'}</button><button class="chip" id="g-side">${lang==='ru'?'Сбоку':'Збоку'}</button><button class="chip" id="gf">${lang==='ru'?'Вся модель':'Вся модель'}</button></div>
-    <div class="process-metrics"><div><span>${lang==='ru'?'Прогресс':'Прогрес'}</span><strong id="g-percent"></strong></div><div><span>${a('layer')}</span><strong id="g-layer"></strong></div><div><span>${lang==='ru'?'Осталось ≈':'Залишилось ≈'}</span><strong id="g-time"></strong></div></div>
+    <div class="process-metrics"><div><span id="g-progress-label">${lang==='ru'?'Прогресс просмотра':'Прогрес перегляду'}</span><strong id="g-percent"></strong></div><div><span>${a('layer')}</span><strong id="g-layer"></strong></div><div><span>${lang==='ru'?'Осталось ≈':'Залишилось ≈'}</span><strong id="g-time"></strong></div></div>
     <div class="g-progress" role="progressbar" aria-label="${lang==='ru'?'Расчётный прогресс':'Розрахунковий прогрес'}" aria-valuemin="0" aria-valuemax="100"><i></i></div>
     <div class="gc"><button class="ib" id="gp" aria-label="${lang==='ru'?'Воспроизвести':'Відтворити'}"></button><input type="range" id="gs" aria-label="${a('layer')}" min="1" max="${n}" value="${n}"></div><div class="gl" id="gl"></div><p class="simulation-note">${a(o.started?'simulation':'noStart')}</p>`;
     const host=box.querySelector('.g3box');
@@ -660,7 +659,7 @@ async function gview(box,url,o){
       if(play||live){const position=gMotionAt(G.moves,elapsed);if(position){nozzle.position.set(position[0]-cx,position[2]-base,-(position[1]-cy));nozzle.visible=elapsed<G.T}}
       slider.value=selected;slider.disabled=live;gp.disabled=live;if(gp.dataset.playing!==String(play)){gp.dataset.playing=String(play);gp.innerHTML='<img src="assets/icons/player-'+(play?'pause':'play')+'.svg" alt="" width="22" height="22">';gp.setAttribute('aria-label',play?(lang==='ru'?'Пауза':'Пауза'):(lang==='ru'?'Воспроизвести':'Відтворити'));}liveButton.classList.toggle('on',live);box.querySelector('#gm').classList.toggle('on',!live);
       const progress=G.T?Math.min(1,elapsed/G.T):1,rem=Math.max(0,Math.ceil((G.T-elapsed)/60));box.querySelector('.g-progress i').style.width=(progress*100)+'%';
-      const stats=Print3DViewer.progress(elapsed,G.T,selected,n);setText('#g-percent',stats.percent+'%');setText('#g-layer',stats.layer+' / '+stats.layers);setText('#g-time',elapsed>=G.T?'—':fmt(rem));box.querySelector('.g-progress').setAttribute('aria-valuenow',stats.percent);const start=ghostData.starts[selected]??ghostData.positions.length/3;ghost.visible=selected<n;ghost.geometry.setDrawRange(start,ghostData.positions.length/3-start);
+      setText('#g-progress-label',live?(lang==='ru'?'Расчётный прогресс':'Розрахунковий прогрес'):(lang==='ru'?'Прогресс просмотра':'Прогрес перегляду'));const stats=Print3DViewer.progress(elapsed,G.T,selected,n);setText('#g-percent',stats.percent+'%');setText('#g-layer',stats.layer+' / '+stats.layers);setText('#g-time',elapsed>=G.T?'—':fmt(rem));box.querySelector('.g-progress').setAttribute('aria-valuenow',stats.percent);const start=ghostData.starts[selected]??ghostData.positions.length/3;ghost.visible=selected<n;ghost.geometry.setDrawRange(start,ghostData.positions.length/3-start);
       label.textContent=live?(lang==='ru'?'Расчёт по времени запуска':'Розрахунок за часом запуску'):(play?(lang==='ru'?'Воспроизведение G-кода':'Відтворення G-коду'):(lang==='ru'?'Ручной просмотр слоёв':'Ручний перегляд шарів'));
     }
     slider.oninput=()=>{selected=+slider.value;live=false;play=false;elapsed=G.layers[selected-1].t1;dirty=true};
@@ -779,6 +778,7 @@ async function onClick(e){
   if(k==="oopen")return openOrder(id);
   if(k==="m3d"||k==="mph"){
     const p=D.products.find(x=>x.id==id),box=document.getElementById("media");if(!p||!box)return;
+    box.dataset.mode=k==="m3d"?"model":"photo";
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
     if(k==="m3d")show3d(box,p.model,photoHTML(p),msel.color?colHex(msel.color):null);else{box.modelRequest=null;delete box.setModelColor;delete box.setModelView;box.innerHTML=photoHTML(p);const tools=box.closest('.mw')?.querySelector('.model-tools');if(tools)tools.hidden=true;const note=box.closest('.mw')?.querySelector('.model-dimensions');if(note)note.textContent=''}return;
   }
@@ -875,8 +875,6 @@ window.openApp=async()=>{
     document.querySelectorAll(".wrap")[1].appendChild(root);hdr=root.querySelector("#hdr");view=root.querySelector("#view");
     const headerSize=new ResizeObserver(()=>document.documentElement.style.setProperty("--app-header-height",hdr.offsetHeight+"px"));headerSize.observe(hdr);
     initBackground();
-    help=document.createElement("div");help.id="help";help.className="glass";help.dataset.a="tab";help.dataset.n="chat";
-    help.innerHTML=`<span class="hi">${ic("chat")}</span><span><b></b><small></small></span>`;document.body.appendChild(help);
     modal=document.createElement("div");modal.id="modal";document.body.appendChild(modal);
     modal.addEventListener("click",e=>{if(e.target===modal)closeModal()});
     let scrollPending=false;addEventListener('scroll',()=>{if(!scrollPending){scrollPending=true;requestAnimationFrame(()=>{scrollPending=false;updateHeaderScroll()})}},{passive:true});
@@ -886,7 +884,7 @@ window.openApp=async()=>{
     setInterval(()=>{if(!document.hidden)pollChat()},4000);
   }
   document.body.classList.add("app-on");document.querySelectorAll(".wrap")[0].style.display="none";
-  root.classList.remove("hide");bub.style.display="";help.style.display="";
+  root.classList.remove("hide");bub.style.display="";
   await load();
   if(!user){try{favs=new Set(JSON.parse(localStorage.getItem('guest-favorites')||'[]'))}catch(e){}tab='home'}
   else if(pendingAuth){tab=pendingAuth}
@@ -906,7 +904,7 @@ window.openApp=async()=>{
 };
 window.closeApp=()=>{
   if(!root)return;
-  root.classList.add("hide");help.style.display="none";closeModal();
+  root.classList.add("hide");closeModal();
   document.body.classList.remove("app-on");document.querySelectorAll(".wrap")[0].style.display="";
 };
 const sl=window.setLang;window.setLang=l=>{sl(l);if(root&&!root.classList.contains("hide")&&!document.body.classList.contains("checkout-auth"))render()};
