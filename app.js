@@ -147,7 +147,7 @@ section[id]{scroll-margin-top:90px}section h2{font-size:30px;margin:0 0 14px}
 #view .grid>*{animation:message-in .6s var(--sp) both}#view .grid>*:nth-child(3n+2){animation-delay:.05s}#view .grid>*:nth-child(3n){animation-delay:.1s}
 #app .logo{letter-spacing:-.6px}#app .btn{box-shadow:0 8px 28px -14px rgba(255,138,31,.65)}
 @media (prefers-reduced-motion:reduce){#view>*,.bub,.bub::after,.hd img,#bg-filament{animation:none}#bg-spot{display:none}}`;
-document.head.appendChild(css);
+document.head.insertBefore(css,document.getElementById("storefront-style"));
 
 let pendingAuth=null,orderDraft=null;
 try{pendingAuth=sessionStorage.getItem('print3d-auth-return');orderDraft=JSON.parse(sessionStorage.getItem('print3d-order-draft')||'null')}catch(e){}
@@ -899,6 +899,7 @@ window.openApp=async()=>{
       document.querySelectorAll('[data-a="pl"],[data-a="co"]').forEach(b=>b.classList.toggle('on',b.dataset.n===osel[b.dataset.a==='pl'?'plastic':'color']));
     }
   }
+  document.documentElement.classList.remove("store-booting");
   if(user){clearAuthReturn()}
 
 };

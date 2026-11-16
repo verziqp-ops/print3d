@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" class="store-booting">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -100,8 +100,18 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
 .center{text-align:center;margin:14px 0 0;font-size:14px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link id="storefront-style" rel="stylesheet" href="premium.css?v=20261116-refined3">
+<link rel="stylesheet" href="refined.css?v=20261116-boot1">
+<style>
+html.store-booting body>.wrap{visibility:hidden}
+#store-boot{display:none}
+html.store-booting #store-boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg);color:var(--text)}
+#store-boot b{font:700 30px Georgia,serif}#store-boot span{font:400 13px system-ui,sans-serif;color:var(--muted)}
+</style>
 </head>
 <body>
+<div id="store-boot" role="status" aria-live="polite"><b>Print3D</b><span>Завантаження…</span></div>
+<noscript><style>#store-boot{display:none!important}</style><p>Для роботи магазину увімкніть JavaScript у браузері.</p></noscript>
 <div class="blob b1"></div><div class="blob b2"></div>
 <div class="wrap">
   <div class="top">
@@ -310,7 +320,7 @@ if(sb){
     user=s?s.user:null;
     $("loginBtn").classList.toggle("hide",!!user);
     $("logoutBtn").classList.toggle("hide",!user);
-    if(ev==="PASSWORD_RECOVERY"){recovering=true;show("newPassCard")}
+    if(ev==="PASSWORD_RECOVERY"){recovering=true;show("newPassCard");document.documentElement.classList.remove("store-booting")}
     else if(ev==="SIGNED_OUT"){recovering=false;window.openApp?openApp():show("formCard")}
     else if(user&&!recovering){
       const m=user.user_metadata||{};
@@ -358,8 +368,7 @@ setLang(lang);
 <script src="flexi-editor.js?v=20261116-refined3"></script>
 <script src="premium-theme.js?v=20261116-refined3"></script>
 <script src="viewer-presentation.js?v=20261116-refined3"></script>
-<script src="app.js?v=20261116-refined3"></script>
-<link rel="stylesheet" href="premium.css?v=20261116-refined3">
-<link rel="stylesheet" href="refined.css?v=20261116-refined3">
+<script src="app.js?v=20261116-boot1"></script>
+
 </body>
 </html>
