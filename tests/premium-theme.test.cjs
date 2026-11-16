@@ -17,3 +17,12 @@ test('header retains admin generators and every storefront action',()=>{
  assert.match(c.hdr.innerHTML,/data-a="theme"/);assert.match(c.hdr.innerHTML,/aria-label="fav"/);
  c.me.is_admin=false;c.head();assert.doesNotMatch(c.hdr.innerHTML,/data-n="generators"/);
 });
+test('rapid theme switches commit one shared palette with color transitions blocked through paint',()=>{
+ const classes=new Set(),frames=new Map();let frame=0,flushes=0;
+ const root={dataset:{},style:{},classList:{add:x=>classes.add(x),remove:x=>classes.delete(x)},get offsetHeight(){assert.ok(classes.has('theme-switching'));flushes++;return 800}};
+ const c=vm.createContext({document:{documentElement:root},localStorage:{getItem:()=>null,setItem:()=>{}},window:{},requestAnimationFrame:fn=>{frames.set(++frame,fn);return frame},cancelAnimationFrame:id=>frames.delete(id)});
+ vm.runInContext(script,c);c.window.Print3DTheme.toggle();c.window.Print3DTheme.toggle();c.window.Print3DTheme.toggle();
+ assert.equal(root.dataset.theme,'dark');assert.equal(root.style.colorScheme,'dark');assert.equal(flushes,4);assert.equal(frames.size,1);
+ let cb=[...frames.values()][0];frames.clear();cb();assert.ok(classes.has('theme-switching'));
+ cb=[...frames.values()][0];frames.clear();cb();assert.equal(classes.has('theme-switching'),false);
+});

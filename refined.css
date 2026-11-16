@@ -109,14 +109,15 @@ body.privacy-page{display:block;padding:0;font-family:var(--f);background:var(--
 @media(prefers-reduced-motion:reduce){.m{animation:none!important}}
 /* Shared action language and full-bleed navigation. */
 #app .hdr{box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax);isolation:isolate}
-#app .hdr.scroll-hidden{transform:none;opacity:1;pointer-events:auto}
+#app .hdr{transition:transform .28s cubic-bezier(.22,1,.36,1)!important}
+#app .hdr.scroll-hidden{transform:translate3d(0,calc(-100% - 1px),0);opacity:1;pointer-events:none}
 #app .pcard:hover{transform:none}#app .pcard .pimg img{transform:none}
 #app .card-actions{display:flex;gap:6px;margin-left:auto}
 #app .card-actions .hb,#app .card-actions .cb{position:static;display:grid;place-items:center;width:40px;height:40px;min-width:40px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);box-shadow:none;transform:none}
 #app .card-actions .hb.on{background:var(--panel);color:var(--accent);border-color:var(--accent)}
 #app .card-actions svg{width:21px;height:21px;stroke-width:1.6}
 body #modal .sheet{gap:20px}
-body #modal .modal-bar{grid-column:1/-1;display:flex;justify-content:flex-end;position:sticky;top:0;z-index:5;background:var(--card);padding:0 0 10px;border-bottom:1px solid var(--line);align-self:start}
+body #modal .modal-bar{grid-column:1/-1;display:flex;justify-content:flex-end;position:static;background:var(--card);padding:0 0 10px;border-bottom:1px solid var(--line);align-self:start}
 body #modal .modal-close{position:static;display:block;min-height:40px;padding:8px 14px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--text);font:500 13px var(--f);cursor:pointer}
 body #modal .product-viewer .media[data-mode="photo"]{aspect-ratio:auto;min-height:0;height:auto}
 body #modal .product-viewer .media[data-mode="photo"] img{display:block;position:static;width:100%;height:auto;max-height:none;object-fit:contain}
@@ -133,3 +134,6 @@ body #modal .product-actions .btn{background:var(--accent);color:var(--bg);borde
 body #modal .image-sheet .modal-bar{margin-bottom:14px}
 @media(max-width:640px){#app .pcard .rw{flex-wrap:wrap;gap:10px}#app .card-actions{gap:5px}#app .card-actions .hb,#app .card-actions .cb{width:36px;min-width:36px;height:36px}body #modal .product-sheet{border-radius:12px;gap:18px}.product-sheet h2{font-size:28px}body #modal .product-viewer{border-radius:8px}body #modal .product-sheet .mut{font-size:13px;line-height:1.6}}
 body:has(#modal.show){overflow:hidden}
+
+/* Commit the palette in one paint; preserve ordinary motion afterwards. */
+html.theme-switching,html.theme-switching *,html.theme-switching *::before,html.theme-switching *::after{transition-duration:0s!important;transition-delay:0s!important}
