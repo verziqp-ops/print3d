@@ -1,10 +1,10 @@
 /* Print3D — warm gallery. Existing editor and commerce behavior is retained. */
 @import url('assets/premium-fonts.css');
 :root,html[data-theme="light"] body,body.app-on,body.bg-ready:not(.app-on){
- --bg:#f6f2ea;--bg2:#ede5d9;--text:#252525;--muted:#655e55;--card:#faf7f1;--line:#d9cbbb;--field:#fffdf8;--accent:#b84b35;--panel:#f1ebe2;--button:#252525;--button-text:#fffdf8;--f:'Manrope',Arial,sans-serif;--display:'Cormorant Garamond',Georgia,serif;--sp:cubic-bezier(.22,1,.36,1);color-scheme:light;
+ --bg:#f6f2ea;--bg2:#ede5d9;--text:#252525;--muted:#655e55;--card:#faf7f1;--line:#d9cbbb;--field:#fffdf8;--accent:#586c83;--panel:#f1ebe2;--button:#252525;--button-text:#fffdf8;--f:'Manrope',Arial,sans-serif;--display:'Cormorant Garamond',Georgia,serif;--sp:cubic-bezier(.22,1,.36,1);color-scheme:light;
 }
 html[data-theme="dark"] body,html[data-theme="dark"] body.app-on,html[data-theme="dark"] body.bg-ready{
- --bg:#201f1c;--bg2:#302d28;--text:#f6f2ea;--muted:#c3b9aa;--card:#292722;--line:#50483e;--field:#302d28;--accent:#e28f72;--panel:#302d28;--button:#f6f2ea;--button-text:#252525;color-scheme:dark;
+ --bg:#201f1c;--bg2:#302d28;--text:#f6f2ea;--muted:#c3b9aa;--card:#292722;--line:#50483e;--field:#302d28;--accent:#9bafc2;--panel:#302d28;--button:#f6f2ea;--button-text:#252525;color-scheme:dark;
 }
 html{scroll-behavior:smooth;background:var(--bg)}
 body,body.app-on,body.bg-ready{font-family:var(--f);background:var(--bg);color:var(--text);line-height:1.5}
@@ -33,7 +33,7 @@ button{ -webkit-tap-highlight-color:transparent }
 .hero-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.72);transform-origin:76% 66%}
 .hero-copy{position:relative;z-index:1;padding:40px 64px;max-width:58%;display:flex;flex-direction:column;align-items:flex-start;min-height:100%}
 #app .hero-copy h1{font-family:Georgia,serif;font-size:clamp(60px,6.5vw,96px);line-height:1.02;font-weight:400;letter-spacing:-3.5px;margin:5px 0 20px}
-.hero-copy h1 span{color:#b84b35}.hero-copy p{font-size:20px;line-height:1.5;max-width:550px;margin:0 0 28px;color:#252525}
+.hero-copy h1 span{color:#586c83}.hero-copy p{font-size:20px;line-height:1.5;max-width:550px;margin:0 0 28px;color:#252525}
 body .btn,#app .btn{font:600 14px/1.4 var(--f);background:var(--button);color:var(--button-text);border:1px solid var(--button);border-radius:2px;box-shadow:none;backdrop-filter:none;padding:14px 22px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:18px;transition:background .2s,transform .2s;min-width:0}
 body .btn::before{display:none}body .btn.ghost,#app .btn.ghost{background:transparent;color:var(--text);border-color:var(--line);box-shadow:none}
 body .btn:hover,#app .btn:hover{transform:translateY(-1px);box-shadow:none}body .btn:disabled{opacity:.5;transform:none}

@@ -1,0 +1,6 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');const chat=require('../chat-tools.js'),src=fs.readFileSync(require.resolve('../app.js'),'utf8');
+function context(){const c=vm.createContext({lang:'uk',user:{id:'owner'},Print3DChat:chat,esc:s=>String(s??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))});vm.runInContext(src.slice(src.indexOf('const msgBody='),src.indexOf('async function threadHTML('))+'this.messagesHTML=messagesHTML;',c);return c}
+test('message groups separate dates and escape message HTML',()=>{
+ const c=context(),html=c.messagesHTML([{body:'<img src=x onerror=alert(1)>',sender_id:'owner',created_at:'2026-11-15T12:00:00Z'},{body:'Наступний день',sender_id:'other',created_at:'2026-11-16T12:00:00Z'}]);assert.equal((html.match(/class="message-day"/g)||[]).length,2);assert.ok(html.includes('&lt;img'));assert.ok(!html.includes('<img src=x'));assert.ok(html.includes('class="m me'));
+});
+test('empty conversations show useful guidance without fake online status',()=>{const html=context().messagesHTML([]);assert.ok(html.includes('Розпочніть розмову'));assert.ok(!html.includes('онлайн'))});

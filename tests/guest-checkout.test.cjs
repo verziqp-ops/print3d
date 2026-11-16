@@ -9,7 +9,7 @@ test('guest order and cart submissions stop at authentication without inserting'
  for(const [action,destination] of [['send','order'],['checkout','cart']]){
   const requests=[];const c=vm.createContext({user:null,requestAuth:t=>requests.push(t)});
   vm.runInContext(source.slice(source.indexOf('async function onClick(e){'),source.indexOf('async function onChange(e){')),c);
-  await c.onClick({target:{closest:()=>({tagName:'BUTTON',dataset:{a:action}})}});assert.deepEqual(requests,[destination]);
+  await c.onClick({target:{closest:selector=>selector==='[data-a]'?({tagName:'BUTTON',dataset:{a:action}}):null}});assert.deepEqual(requests,[destination]);
  }
 });
 test('public navigation remains open while account and chat require authentication',async()=>{

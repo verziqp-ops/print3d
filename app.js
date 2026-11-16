@@ -24,7 +24,7 @@ cartEmpty:["Кошик порожній","Корзина пуста"],edit:["З�
 const a=k=>(S[k]||[k,k])[lang==="ru"?1:0];
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ST=["pending","printing","ready","shipping","delivered"];
-const STC={pending:"#8a8a8a",printing:"#ff8a1f",ready:"#2e9e57",shipping:"#3a7bd5",delivered:"#8a6fe0"};
+const STC={pending:"#8a8a8a",printing:"#586c83",ready:"#2e9e57",shipping:"#3a7bd5",delivered:"#8a6fe0"};
 const P={camera:'<path d="M4 7h4l2-3h4l2 3h4a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="4"/>',cube:'<path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
 chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/>',
 user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
@@ -222,47 +222,52 @@ const card=p=>`<div class="pcard glass" data-a="open" data-id="${p.id}"><button 
 <div class="rw"><b class="pr">${p.price!=null?p.price+" грн":""}</b><button class="cb" data-a="qadd" data-id="${p.id}" aria-label="${a("addCart")}: ${esc(p.title)}">${ic("cart")}</button></div></div>`;
 const grid=l=>l.length?`<div class="grid">${l.map(card).join("")}</div>`:`<p class="mut">${a("empty")}</p>`;
 const catBlock=()=>`<div class="pills"><button class="chip ${fcat==null?"on":""}" data-a="cf" data-n="">${a("all")}</button>${D.cats.map(c=>`<button class="chip ${fcat==c.id?"on":""}" data-a="cf" data-n="${c.id}">${esc(c.name)}</button>`).join("")}</div>${grid(D.products.filter(p=>fcat==null||p.category_id==fcat))}`;
-const premiumExamples=[
-  {key:'vase',uk:'Вази',ru:'Вазы',title:['Ваза','Ваза'],descr:['Стильні форми для інтер’єру та особливого настрою.','Стильные формы для интерьера и особого настроения.']},
-  {key:'organizer',uk:'Органайзери',ru:'Органайзеры',title:['Органайзер','Органайзер'],descr:['Практичні рішення для порядку на робочому місці.','Практичные решения для порядка на рабочем месте.']},
-  {key:'stand',uk:'Підставки',ru:'Подставки',title:['Підставка','Подставка'],descr:['Зручні аксесуари для телефона на щодень.','Удобные аксессуары для телефона на каждый день.']}
-];
 const arrow=()=>'<img class="arrow-icon" src="assets/icons/arrow-right.svg" alt="" width="28" height="28">';
 const home=()=>`<section class="premium-hero" aria-labelledby="hero-title">
 <img class="hero-photo" src="assets/premium-hero.webp?v=2" alt="${lang==='ru'?'Ребристая ваза — пример 3D-печати':'Ребриста ваза — приклад 3D-друку'}" fetchpriority="high" width="1600" height="900">
 <div class="hero-copy"><h1 id="hero-title">${lang==='ru'?'Вещи с<br>характером':'Речі з<br>характером'}<span>.</span></h1><p>${a('heroP')}</p><button class="btn hero-cta" data-a="goto" data-n="catalog">${lang==='ru'?'Посмотреть каталог':'Переглянути каталог'} ${arrow()}</button></div></section>
-<section id="catalog" class="example-section"><div class="section-heading"><h2>${a('cat')}</h2><span>${lang==='ru'?'Примеры изделий':'Приклади виробів'}</span></div>
-<div class="example-grid">${premiumExamples.map((x,i)=>`<button class="example-card" data-a="idea" data-n="${i}" aria-label="${lang==='ru'?'Запросить печать: ':'Замовити друк: '}${lang==='ru'?x.ru:x.uk}"><img src="assets/premium-${x.key}.webp?v=3" alt="${lang==='ru'?x.ru:x.uk}" loading="lazy" width="900" height="900"><span class="example-title">${lang==='ru'?x.ru:x.uk}${arrow()}</span><span class="example-description">${x.descr[lang==='ru'?1:0]}</span></button>`).join('')}</div>
-<p class="example-note">${lang==='ru'?'Иллюстрации для вдохновения. Возможность изготовления и стоимость согласуем в чате.':'Ілюстрації для натхнення. Можливість виготовлення та вартість погодимо в чаті.'}</p></section>
-<section id="products" class="actual-catalog"><div class="section-heading"><h2>${lang==='ru'?'Товары в каталоге':'Товари в каталозі'}</h2></div><div id="cg">${catBlock()}</div></section>
+<section id="catalog" class="actual-catalog"><div class="section-heading"><h2>${a('cat')}</h2></div><div id="cg">${catBlock()}</div></section>
 <section class="how-section"><h2>${a('how')}</h2><div class="steps">${[1,2,3,4].map(i=>`<div class="step"><span>0${i}</span><p>${a('s'+i)}</p></div>`).join('')}</div><button class="btn ghost" data-a="new">${a('order')} ${arrow()}</button></section>
-<footer class="store-footer"><span>Print3D</span><p>${lang==='ru'?'От идеи — к вашей вещи.':'Від ідеї — до вашої речі.'}</p><button class="link" data-a="tab" data-n="chat">${a('chat')}</button><button class="link" data-a="privacy">${lang==='ru'?'Конфиденциальность':'Конфіденційність'}</button></footer>`;
+<footer class="store-footer"><span>Print3D</span><p>${lang==='ru'?'От идеи — к вашей вещи.':'Від ідеї — до вашої речі.'}</p><button class="link" data-a="tab" data-n="chat">${a('chat')}</button><a class="link" href="privacy.html" data-a="privacy">${lang==='ru'?'Конфиденциальность':'Конфіденційність'}</a></footer>`;
 const favView=()=>`<h2>${a("fav")}</h2>`+(favs.size?grid(D.products.filter(p=>favs.has(p.id))):`<p class="mut">${a("favEmpty")}</p>`);
 let chatUid=null,chatSig="";
 const seenGet=u=>+localStorage.getItem("seen:"+u)||0;
 const seenSet=(u,id)=>{try{localStorage.setItem("seen:"+u,id)}catch(e){}};
 const msgBody=body=>String(body||'').split(/(https?:\/\/[^\s<>"']+)/g).map((part,i)=>i%2?`<a href="${esc(part)}" target="_blank" rel="noopener noreferrer">${esc(part)}</a>`:esc(part)).join('');
-const msgHTML=m=>`<div class="m ${m.sender_id===user.id?"me":""}">${m.image?`<img src="${esc(m.image)}">`:""}${Print3DChat.attachments(m.body)}${msgBody(Print3DChat.decode(m.body).text)}<small>${new Date(m.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></div>`;
+const chatPeople=new Map();
+const msgHTML=m=>{
+  const data=Print3DChat.decode(m.body),own=m.sender_id===user.id,date=new Date(m.created_at),time=Number.isNaN(date.getTime())?'':date.toLocaleTimeString(lang==='ru'?'ru-RU':'uk-UA',{hour:'2-digit',minute:'2-digit'});
+  const system=data.text?.startsWith('📦 Нове замовлення #')||data.text==='Друк розпочався! Процес можна подивитися у своєму замовленні.';
+  return `<article class="m ${own?'me':''} ${system?'system-message':''}">${system?`<span class="message-kind">${lang==='ru'?'Обновление заказа':'Оновлення замовлення'}</span>`:''}${m.image?`<img src="${esc(m.image)}" alt="${lang==='ru'?'Фото в сообщении':'Фото в повідомленні'}" loading="lazy">`:''}${Print3DChat.attachments(m.body)}${data.text?`<div class="message-body">${msgBody(data.text)}</div>`:''}<time datetime="${esc(m.created_at||'')}">${time}</time></article>`;
+};
+function messagesHTML(list){
+  if(!list.length)return `<div class="messages-empty"><b>${lang==='ru'?'Начните разговор':'Розпочніть розмову'}</b><p>${lang==='ru'?'Расскажите об идее или прикрепите файл для печати.':'Розкажіть про ідею або прикріпіть файл для друку.'}</p></div>`;
+  let previous='';return list.map(m=>{const date=new Date(m.created_at),key=Number.isNaN(date.getTime())?'':date.toLocaleDateString(lang==='ru'?'ru-RU':'uk-UA',{day:'numeric',month:'long',year:'numeric'}),divider=key&&key!==previous?`<div class="message-day">${esc(key)}</div>`:'';previous=key;return divider+msgHTML(m)}).join('');
+}
 async function threadHTML(uid){
-  const {data}=await sb.from("messages").select("*").eq("user_id",uid).order("id");
-  chatSig=String(data&&data.length?data[data.length-1].id:0);
-  if(data&&data.length)seenSet(uid,data[data.length-1].id);
-  return `<div class="card2 chat glass"><div id="msgs">${(data||[]).map(msgHTML).join("")||`<p class="mut">${a("noThreads")}</p>`}</div>
-  <div id="chat-quick" class="chat-quick"></div><div id="chat-attachments" class="chat-attachments"></div><p id="chat-file-error" class="err" role="status"></p><div class="cin"><label class="ib" style="cursor:pointer" title="Додати фото" aria-label="Додати фото">${ic("camera")}<input type="file" id="cphoto" accept="image/*" multiple hidden></label><label class="ib" style="cursor:pointer" title="Додати файли" aria-label="Додати файли">${ic("up")}<input type="file" id="cimg" multiple hidden></label><input type="text" id="cin" placeholder="${a("writeMsg")}"><button class="btn" style="min-width:0" data-a="msg">${a("sendMsg")}</button></div></div>`;
+  const [messages,orders]=await Promise.all([sb.from('messages').select('*').eq('user_id',uid).order('id'),sb.from('orders').select('id,title,status').eq('user_id',uid).order('id',{ascending:false}).limit(1)]);
+  if(messages.error)throw messages.error;
+  const data=messages.data||[],order=orders.data?.[0],person=me.is_admin?chatPeople.get(uid):null,title=me.is_admin?(person?.name||(lang==='ru'?'Клиент':'Клієнт')):'Print3D';
+  chatSig=String(data.length?data[data.length-1].id:0);if(data.length)seenSet(uid,data[data.length-1].id);
+  return `<div class="card2 chat glass"><header class="chat-topbar">${me.is_admin?`<button class="chat-back" data-a="threads" aria-label="${a('backChats')}">←</button>`:''}<span class="chat-avatar">${person?.avatar?`<img src="${esc(person.avatar)}" alt="">`:esc(title[0])}</span><div class="chat-title"><b>${esc(title)}</b><span>${me.is_admin?(lang==='ru'?'Переписка с клиентом':'Листування з клієнтом'):(lang==='ru'?'Поддержка и согласование заказа':'Підтримка й погодження замовлення')}</span></div></header>
+  ${order?`<button class="chat-order-link" data-a="chatorder" data-id="${order.id}"><span>${lang==='ru'?'Заказ':'Замовлення'} #${order.id} · ${esc(order.title)}</span><span class="badge" style="background:${STC[order.status]||'#657484'}">${a(order.status)}</span></button>`:''}
+  <div id="msgs" aria-label="${lang==='ru'?'Сообщения':'Повідомлення'}">${messagesHTML(data)}</div>
+  <div class="chat-composer"><div id="chat-attachments" class="chat-attachments"></div><p id="chat-file-error" class="err" role="status"></p><div class="cin"><label class="ib" title="${a('photo')}" aria-label="${a('photo')}">${ic('camera')}<input type="file" id="cphoto" accept="image/*" multiple hidden></label><label class="ib" title="${a('file')}" aria-label="${a('file')}">${ic('up')}<input type="file" id="cimg" multiple hidden></label><input type="text" id="cin" autocomplete="off" aria-label="${a('writeMsg')}" placeholder="${a('writeMsg')}"><button class="btn" data-a="msg">${a('sendMsg')}</button></div><div id="chat-quick" class="chat-quick"></div></div></div>`;
 }
 async function adminList(){
-  const [m,p]=await Promise.all([sb.from("messages").select("id,user_id,sender_id,body,image").order("id",{ascending:false}).limit(1000),sb.from("profiles").select("id,first_name,last_name,avatar")]);
+  const [m,p]=await Promise.all([sb.from('messages').select('*').order('id',{ascending:false}),sb.from('profiles').select('id,first_name,last_name,avatar')]);
   const last=new Map();(m.data||[]).forEach(x=>{if(!last.has(x.user_id))last.set(x.user_id,x)});
-  const ppl=(p.data||[]).filter(x=>x.id!==user.id).map(x=>({...x,name:((x.first_name||"")+" "+(x.last_name||"")).trim()||"—",m:last.get(x.id)}));
-  ppl.sort((u,v)=>(v.m?v.m.id:0)-(u.m?u.m.id:0)||u.name.localeCompare(v.name));
-  return ppl.map(x=>{const un=x.m&&x.m.sender_id!==user.id&&x.m.id>seenGet(x.id);
-    return `<div class="pr2 ${chatUid===x.id?"on":""}" data-a="thread" data-id="${x.id}"><span class="av2">${x.avatar?`<img src="${esc(x.avatar)}">`:esc((x.name[0]||"?").toUpperCase())}</span><span class="pn"><b>${esc(x.name)}</b><small>${x.m?esc(Print3DChat.decode(x.m.body).text||Print3DChat.decode(x.m.body).files[0]?.name||"Фото"):"&nbsp;"}</small></span>${un?`<i class="dot"></i>`:""}</div>`}).join("")||`<p class="mut">${a("noThreads")}</p>`;
+  const people=(p.data||[]).filter(x=>x.id!==user.id).map(x=>({...x,name:((x.first_name||'')+' '+(x.last_name||'')).trim()||'—',m:last.get(x.id)}));
+  people.sort((u,v)=>(v.m?v.m.id:0)-(u.m?u.m.id:0)||u.name.localeCompare(v.name));
+  people.forEach(x=>chatPeople.set(x.id,x));
+  return people.map(x=>{const unread=x.m&&x.m.sender_id!==user.id&&x.m.id>seenGet(x.id),decoded=x.m?Print3DChat.decode(x.m.body):null;
+    return `<button type="button" class="pr2 ${chatUid===x.id?'on':''}" data-a="thread" data-id="${esc(x.id)}" aria-current="${chatUid===x.id}"><span class="av2">${x.avatar?`<img src="${esc(x.avatar)}" alt="">`:esc((x.name[0]||'?').toUpperCase())}</span><span class="pn"><b>${esc(x.name)}</b><small>${decoded?esc(decoded.text||decoded.files[0]?.name||a('photoT')):(lang==='ru'?'Нет сообщений':'Немає повідомлень')}</small></span>${unread?'<i class="dot" aria-label="Непрочитане"></i>':''}</button>`}).join('')||`<p class="mut">${a('noThreads')}</p>`;
 }
 async function chatView(){
-  if(!me.is_admin){chatUid=user.id;return `<h2>${a("chat")}</h2>`+await threadHTML(user.id)}
-  const list=await adminList();
-  const th=chatUid?await threadHTML(chatUid):`<div class="card2 chat glass"><p class="mut" style="margin:auto">${a("pick")}</p></div>`;
-  return `<h2>${a("chat")}</h2><div class="cw ${chatUid?"has":""}"><div class="card2 clist glass" id="clist">${list}</div><div class="cth">${chatUid?`<button class="link back" data-a="threads">${a("backChats")}</button>`:""}${th}</div></div>`;
+  const heading=`<div class="chat-page-heading"><h2>${a('chat')}</h2><p>${lang==='ru'?'Все детали заказа — в одном разговоре.':'Усі деталі замовлення — в одній розмові.'}</p></div>`;
+  if(!me.is_admin){chatUid=user.id;return `<section class="chat-screen client-chat">${heading}${await threadHTML(user.id)}</section>`}
+  const list=await adminList(),thread=chatUid?await threadHTML(chatUid):`<div class="chat-empty"><b>${a('pick')}</b><p>${lang==='ru'?'Сообщения и файлы откроются здесь.':'Повідомлення й файли відкриються тут.'}</p></div>`;
+  return `<section class="chat-screen">${heading}<div class="cw ${chatUid?'has':''}"><aside class="card2 clist glass" id="clist" aria-label="${lang==='ru'?'Разговоры':'Розмови'}">${list}</aside><div class="cth">${thread}</div></div></section>`;
 }
 async function pollChat(force){
   if(!user||tab!=="chat")return;
@@ -274,7 +279,7 @@ async function pollChat(force){
   if(data&&data.length)seenSet(chatUid,data[data.length-1].id);
   const box=document.getElementById("msgs");if(!box)return;
   const bottom=force||box.scrollHeight-box.scrollTop-box.clientHeight<80;
-  box.innerHTML=(data||[]).map(msgHTML).join("")||`<p class="mut">${a("noThreads")}</p>`;
+  box.innerHTML=messagesHTML(data||[]);
   if(bottom)box.scrollTop=box.scrollHeight;
 }
 
@@ -375,7 +380,7 @@ function updateCalculator(){
   document.getElementById('calc-rounded').textContent='';document.querySelector('[data-a="roundprice"]').disabled=!result;
 }
 
-const ORG_DEFAULT={width:180,depth:120,height:45,wall:2,bottom:2,columns:3,rows:2,color:'#ff8a1f'};
+const ORG_DEFAULT={width:180,depth:120,height:45,wall:2,bottom:2,columns:3,rows:2,color:'#c8cbd0'};
 let orgValues={...ORG_DEFAULT},orgModel=null,orgViewer=null,orgTimer=null;
 try{orgValues={...ORG_DEFAULT,...JSON.parse(localStorage.getItem('print3d:organizer')||'{}')}}catch(e){}
 function organizerHTML(){
@@ -502,12 +507,12 @@ function openProduct(id,source){
   const pl=D.plastics.find(x=>x.name===p.plastic);
   const mat=p.plastic?`<div class="chips"><span class="chip on">${esc(p.plastic)}</span></div>`:`<div class="chips">${D.plastics.map(x=>`<button class="chip" data-a="mpl" data-n="${esc(x.name)}">${esc(x.name)}</button>`).join("")}</div>`;
   const cl=pcols(p);const col=fc?`<div class="chips"><span class="chip on"><i style="background:${esc(colHex(fc))}"></i>${esc(fc)}</span></div>`:`<div class="chips">${cl.map(c=>`<button class="chip" data-a="mco" data-n="${esc(c.name)}"><i style="background:${esc(c.hex)}"></i>${esc(c.name)}</button>`).join("")}</div>`;
-  modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
-  <div class="mw"><div class="media" id="media">${photoHTML(p)}</div>${p.model?`<div class="mt"><button class="chip on" data-a="mph" data-id="${p.id}">${a("photoT")}</button><button class="chip" data-a="m3d" data-id="${p.id}">3D</button></div>`:""}</div>
+  modal.innerHTML=`<div class="sheet glass product-sheet"><button class="x" data-a="close" aria-label="${a("cancel")}">${ic("x")}</button>
+  <div class="mw product-viewer"><div class="media model-stage" id="media">${photoHTML(p)}</div>${p.model?`<div class="mt"><button class="chip on" data-a="mph" data-id="${p.id}">${a("photoT")}</button><button class="chip" data-a="m3d" data-id="${p.id}">3D</button></div><div class="model-tools" hidden><button type="button" data-a="model-fit">${lang==='ru'?'Ракурс':'Ракурс'}</button><button type="button" data-a="model-top">${lang==='ru'?'Сверху':'Зверху'}</button><button type="button" data-a="model-side">${lang==='ru'?'Сбоку':'Збоку'}</button><button type="button" data-a="model-full">${lang==='ru'?'На весь экран':'На весь екран'}</button></div><p class="model-dimensions" role="status"></p>`:""}</div>
   <div><h2>${esc(p.title)}</h2>${p.descr?`<p class="mut">${esc(p.descr)}</p>`:""}
   <div class="stats">${p.price!=null?`<span class="stat">${ic("tag")}${p.price} грн</span>`:""}${p.print_minutes?`<span class="stat">${ic("clock")}${fmt(p.print_minutes)}</span>`:""}${p.grams?`<span class="stat">${ic("wt")}${p.grams} г</span>`:""}</div>
   ${D.plastics.length||p.plastic?`<div class="lb">${a("material")}</div>${mat}<p class="mut" id="mpd">${esc(pl?pl.descr||"":"")}</p>`:""}
-  ${cl.length?`<div class="lb">${a("color")}</div>${col}`:""}
+  ${cl.length?`<div class="lb">${a("color")}</div>${col}<p class="mut model-color-note" id="model-color-note">${fc?esc(fc):(lang==='ru'?'Выберите цвет. Нейтральное 3D-превью не задаёт цвет заказа.':'Оберіть колір. Нейтральне 3D-прев’ю не задає колір замовлення.')}</p>`:""}
   <div class="rw" style="margin-top:16px"><button class="btn" style="flex:1" data-a="addcart" data-id="${p.id}">${a("addCart")}</button><button class="ib ${favs.has(p.id)?"on":""}" data-a="fav" data-id="${p.id}" aria-label="${a("fav")}: ${esc(p.title)}">${ic("heart")}</button></div>
   </div></div>`;
   showModal(source,true);
@@ -602,7 +607,7 @@ function gLayerGeometry(T,L,cx,cy,base){
   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setAttribute('normal',new T.BufferAttribute(normals,3));geo.setIndex(new T.BufferAttribute(indices,1));return geo;
 }
 async function gview(box,url,o){
-  box.innerHTML='<p class="mut">…</p>';let G;
+  box.innerHTML='<div class="viewer-loading">'+a('load3d')+'</div>';let G;
   try{const response=await fetch(url);if(!response.ok)throw Error('G-code download');G=parseG(await response.text())}catch(e){console.error('G-code',e);box.innerHTML='<p class="mut">'+a('err')+'</p>';return}
   if(!box.isConnected)return;if(!G.layers.length){box.innerHTML='<p class="mut">'+a('err')+'</p>';return}
   try{
@@ -610,29 +615,37 @@ async function gview(box,url,o){
     let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
     for(const L of G.layers)for(let i=0;i<L.s.length;i+=3){minX=Math.min(minX,L.s[i]);maxX=Math.max(maxX,L.s[i]);minY=Math.min(minY,L.s[i+1]);maxY=Math.max(maxY,L.s[i+1])}
     const cx=(minX+maxX)/2,cy=(minY+maxY)/2,base=G.layers[0].z-G.layers[0].h,modelHeight=G.layers.at(-1).z-base,span=Math.max(maxX-minX,maxY-minY,modelHeight,1);
-    const scene=new T.Scene();scene.background=new T.Color(0x111317);
-    const normal=new T.MeshStandardMaterial({color:0xf39a36,roughness:.68,metalness:0,side:T.DoubleSide}),active=new T.MeshStandardMaterial({color:0xffd06a,roughness:.65,side:T.DoubleSide});
+    let lastDark=window.Print3DTheme.isDark();const palette=Print3DViewer.palette(lastDark);const scene=new T.Scene();scene.background=new T.Color(palette.background);
+    const modelColor=Print3DViewer.selectedColor(o.color,lastDark),normal=new T.MeshStandardMaterial({color:modelColor,roughness:.82,metalness:.02,side:T.DoubleSide}),active=new T.MeshStandardMaterial({color:new T.Color(modelColor).lerp(new T.Color('#ffffff'),.22),roughness:.75,side:T.DoubleSide});
     const meshes=[];
     // Yield between batches so large files do not freeze touch/scroll controls.
     for(let i=0;i<G.layers.length;i++){const mesh=new T.Mesh(gLayerGeometry(T,G.layers[i],cx,cy,base),normal);scene.add(mesh);meshes.push(mesh);if(i%16===15){await new Promise(resolve=>setTimeout(resolve,0));if(!box.isConnected){meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();return}}}
-    scene.add(new T.HemisphereLight(0xffffff,0x4c5263,2.4));const light=new T.DirectionalLight(0xffffff,2.8);light.position.set(span,span*2,span);scene.add(light);
-    const plateSize=Math.max(maxX-minX,maxY-minY,10)*1.25,plateGeo=new T.PlaneGeometry(plateSize,plateSize),plateMat=new T.MeshStandardMaterial({color:0x23272d,roughness:1,side:T.DoubleSide}),plate=new T.Mesh(plateGeo,plateMat);plate.rotation.x=-Math.PI/2;plate.position.y=-.06;scene.add(plate);
-    const grid=new T.GridHelper(plateSize,20,0x555c65,0x343a42);grid.position.y=-.04;scene.add(grid);
+    scene.add(new T.HemisphereLight(0xffffff,0x84909b,2.1));const light=new T.DirectionalLight(0xffffff,2.5);light.position.set(span,span*2,span);scene.add(light);
+    const plateSize=Math.max(maxX-minX,maxY-minY,10)*1.25,plateGeo=new T.PlaneGeometry(plateSize,plateSize),plateMat=new T.MeshStandardMaterial({color:palette.floor,roughness:1,side:T.DoubleSide}),plate=new T.Mesh(plateGeo,plateMat);plate.rotation.x=-Math.PI/2;plate.position.y=-.06;scene.add(plate);
+    const grid=new T.GridHelper(plateSize,20,palette.grid,palette.floor);grid.position.y=-.04;scene.add(grid);
     const n=meshes.length;
-    box.innerHTML='<div class="g-modes"><button class="chip on" id="gm">'+a('process')+'</button><button class="chip" id="gl2" '+(!o.started?'disabled':'')+'>'+a('live')+'</button><span class="pill">PRINT3D</span></div><div class="g3box"></div><div class="gc"><button class="ib" id="gp" aria-label="Play">▶</button><input type="range" id="gs" aria-label="'+a('layer')+'" min="1" max="'+n+'" value="'+n+'"><button class="chip" id="gf">'+(lang==='ru'?'Весь объект':'Вся модель')+'</button></div><div class="g-progress"><i></i></div><div class="gl" id="gl"></div><p class="gl">'+a(o.started?'simulation':'noStart')+'</p>';
-    const host=box.querySelector('.g3box');host.style.cssText='width:100%;height:min(58vh,520px);min-height:330px;border-radius:20px;overflow:hidden;cursor:grab;';
-    const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));host.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';
+    box.innerHTML=`<div class="process-heading"><div><span class="viewer-eyebrow">G-CODE / ${lang==='ru'?'ВИЗУАЛИЗАЦИЯ':'ВІЗУАЛІЗАЦІЯ'}</span><h3>${lang==='ru'?'Просмотр печати':'Перегляд друку'}</h3></div><button class="chip" id="g-full">${lang==='ru'?'На весь экран':'На весь екран'}</button></div>
+    <div class="g-modes"><button class="chip on" id="gm">${lang==='ru'?'Слои':'Шари'}</button><button class="chip" id="gl2" ${!o.started?'disabled':''}>${lang==='ru'?'По времени запуска':'За часом запуску'}</button></div>
+    <div class="g3box"></div><div class="g-camera"><button class="chip" id="g-iso">3D</button><button class="chip" id="g-top">${lang==='ru'?'Сверху':'Зверху'}</button><button class="chip" id="g-side">${lang==='ru'?'Сбоку':'Збоку'}</button><button class="chip" id="gf">${lang==='ru'?'Вся модель':'Вся модель'}</button></div>
+    <div class="process-metrics"><div><span>${lang==='ru'?'Прогресс':'Прогрес'}</span><strong id="g-percent"></strong></div><div><span>${a('layer')}</span><strong id="g-layer"></strong></div><div><span>${lang==='ru'?'Осталось ≈':'Залишилось ≈'}</span><strong id="g-time"></strong></div></div>
+    <div class="g-progress" role="progressbar" aria-label="${lang==='ru'?'Расчётный прогресс':'Розрахунковий прогрес'}" aria-valuemin="0" aria-valuemax="100"><i></i></div>
+    <div class="gc"><button class="ib" id="gp" aria-label="${lang==='ru'?'Воспроизвести':'Відтворити'}"></button><input type="range" id="gs" aria-label="${a('layer')}" min="1" max="${n}" value="${n}"></div><div class="gl" id="gl"></div><p class="simulation-note">${a(o.started?'simulation':'noStart')}</p>`;
+    const host=box.querySelector('.g3box');
+    const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';
     const camera=new T.PerspectiveCamera(42,1,Math.max(.01,span/10000),span*50),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.enablePan=true;controls.minDistance=span*.1;controls.maxDistance=span*10;
     const center=new T.Vector3(0,modelHeight/2,0),direction=new T.Vector3(1,.8,1.3).normalize();
     function fit(){const aspect=Math.max(.1,host.clientWidth/host.clientHeight),vf=camera.fov*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*aspect),radius=Math.hypot(maxX-minX,maxY-minY,modelHeight)/2+.5,distance=radius/Math.sin(Math.min(vf,hf)/2)*1.12;controls.target.copy(center);camera.position.copy(center).addScaledVector(direction,distance);controls.update()}
-    function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}
+    let dirty=true;
+    function resize(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();dirty=true}
     resize();fit();const observer=new ResizeObserver(resize);observer.observe(host);
     const gp=box.querySelector('#gp'),slider=box.querySelector('#gs'),label=box.querySelector('#gl'),liveButton=box.querySelector('#gl2');
-    const nozzle=new T.Group(),nozzleMat=new T.MeshStandardMaterial({color:0xb8c0ce,metalness:.65,roughness:.3}),tipMat=new T.MeshStandardMaterial({color:0xffaa35,metalness:.6,roughness:.35});
+    const nozzle=new T.Group(),nozzleMat=new T.MeshStandardMaterial({color:0xb8c0ce,metalness:.65,roughness:.3}),tipMat=new T.MeshStandardMaterial({color:0x8c9aa5,metalness:.6,roughness:.35});
     const nozzleSize=Math.max(.7,Math.min(3,span*.025)),bodyGeo=new T.BoxGeometry(nozzleSize*1.5,nozzleSize*1.1,nozzleSize*1.5),tipGeo=new T.ConeGeometry(nozzleSize*.38,nozzleSize*.65,12);
     const body=new T.Mesh(bodyGeo,nozzleMat),tip=new T.Mesh(tipGeo,tipMat);body.position.y=nozzleSize*1.1;tip.rotation.z=Math.PI;tip.position.y=nozzleSize*.325;nozzle.add(body,tip);scene.add(nozzle);
     const beadGeo=gLayerGeometry(T,{s:[0,0,0,1,0,0],w:[1],h:1},0,0,0),bead=new T.Mesh(beadGeo,active);scene.add(bead);
-    let selected=n,play=false,live=false,elapsed=G.T,dirty=true;
+    const ghostData=Print3DViewer.ghostPaths(G.layers,cx,cy,base),ghostGeo=new T.BufferGeometry();ghostGeo.setAttribute('position',new T.BufferAttribute(ghostData.positions,3));const ghostMat=new T.LineBasicMaterial({color:palette.text,transparent:true,opacity:.12,depthWrite:false}),ghost=new T.LineSegments(ghostGeo,ghostMat);scene.add(ghost);
+    let selected=n,play=false,live=false,elapsed=G.T;
+    const setText=(id,text)=>{const el=box.querySelector(id);if(el.textContent!==text)el.textContent=text};
     function update(){
       if(live||play){selected=1;for(let i=0;i<n;i++)if(G.layers[i].t0<=elapsed)selected=i+1}
       nozzle.visible=bead.visible=false;
@@ -645,32 +658,36 @@ async function gview(box,url,o){
         }
       }
       if(play||live){const position=gMotionAt(G.moves,elapsed);if(position){nozzle.position.set(position[0]-cx,position[2]-base,-(position[1]-cy));nozzle.visible=elapsed<G.T}}
-      slider.value=selected;slider.disabled=live;gp.disabled=live;gp.textContent=play?'❚❚':'▶';liveButton.classList.toggle('on',live);box.querySelector('#gm').classList.toggle('on',!live);
+      slider.value=selected;slider.disabled=live;gp.disabled=live;if(gp.dataset.playing!==String(play)){gp.dataset.playing=String(play);gp.innerHTML='<img src="assets/icons/player-'+(play?'pause':'play')+'.svg" alt="" width="22" height="22">';gp.setAttribute('aria-label',play?(lang==='ru'?'Пауза':'Пауза'):(lang==='ru'?'Воспроизвести':'Відтворити'));}liveButton.classList.toggle('on',live);box.querySelector('#gm').classList.toggle('on',!live);
       const progress=G.T?Math.min(1,elapsed/G.T):1,rem=Math.max(0,Math.ceil((G.T-elapsed)/60));box.querySelector('.g-progress i').style.width=(progress*100)+'%';
-      label.textContent=a('layer')+' '+selected+' / '+n+' · '+Math.round(progress*100)+'% · '+(elapsed>=G.T?a('ready'):a('left')+' '+fmt(rem));
+      const stats=Print3DViewer.progress(elapsed,G.T,selected,n);setText('#g-percent',stats.percent+'%');setText('#g-layer',stats.layer+' / '+stats.layers);setText('#g-time',elapsed>=G.T?'—':fmt(rem));box.querySelector('.g-progress').setAttribute('aria-valuenow',stats.percent);const start=ghostData.starts[selected]??ghostData.positions.length/3;ghost.visible=selected<n;ghost.geometry.setDrawRange(start,ghostData.positions.length/3-start);
+      label.textContent=live?(lang==='ru'?'Расчёт по времени запуска':'Розрахунок за часом запуску'):(play?(lang==='ru'?'Воспроизведение G-кода':'Відтворення G-коду'):(lang==='ru'?'Ручной просмотр слоёв':'Ручний перегляд шарів'));
     }
     slider.oninput=()=>{selected=+slider.value;live=false;play=false;elapsed=G.layers[selected-1].t1;dirty=true};
     gp.onclick=()=>{live=false;if(!play&&elapsed>=G.T)elapsed=0;play=!play;dirty=true};
     liveButton.onclick=()=>{if(!o.started)return;live=true;play=false;dirty=true};
     box.querySelector('#gm').onclick=()=>{live=false;play=false;dirty=true};
     box.querySelector('#gf').onclick=()=>{selected=n;elapsed=G.T;play=live=false;fit();dirty=true};
+    box.querySelector('#g-full').onclick=()=>Print3DViewer.fullscreen(box);
+    box.querySelector('#g-iso').onclick=()=>{direction.set(1,.8,1.3).normalize();fit();dirty=true};box.querySelector('#g-top').onclick=()=>{direction.set(0,1,.001).normalize();fit();dirty=true};box.querySelector('#g-side').onclick=()=>{direction.set(1,.12,.001).normalize();fit();dirty=true};
     let last=performance.now(),disposed=false;
-    function dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();bodyGeo.dispose();tipGeo.dispose();nozzleMat.dispose();tipMat.dispose();beadGeo.dispose();plateGeo.dispose();plateMat.dispose();grid.geometry.dispose();(Array.isArray(grid.material)?grid.material:[grid.material]).forEach(m=>m.dispose());renderer.dispose()}
-    function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=["ready","shipping","delivered"].includes(o.status)?G.T:Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}if(dirty){update();dirty=false}controls.update();renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
+    function dispose(){if(disposed)return;disposed=true;observer.disconnect();controls.dispose();meshes.forEach(m=>m.geometry.dispose());normal.dispose();active.dispose();bodyGeo.dispose();tipGeo.dispose();nozzleMat.dispose();tipMat.dispose();beadGeo.dispose();plateGeo.dispose();plateMat.dispose();grid.geometry.dispose();(Array.isArray(grid.material)?grid.material:[grid.material]).forEach(m=>m.dispose());ghostGeo.dispose();ghostMat.dispose();renderer.dispose()}
+    function loop(now){if(!host.isConnected){dispose();return}const dt=Math.min(.1,(now-last)/1000);last=now;if(live){elapsed=["ready","shipping","delivered"].includes(o.status)?G.T:Math.max(0,Math.min(G.T,(Date.now()-o.started)/1000));dirty=true}else if(play){elapsed=Math.min(G.T,elapsed+dt*G.T/35);if(elapsed>=G.T)play=false;dirty=true}const dark=window.Print3DTheme.isDark();if(dark!==lastDark){lastDark=dark;const p=Print3DViewer.palette(dark);scene.background.set(p.background);plateMat.color.set(p.floor);const gm=Array.isArray(grid.material)?grid.material:[grid.material];gm.forEach(m=>m.color.set(p.grid));ghostMat.color.set(p.text);if(!o.color){normal.color.set(p.model);active.color.set(p.model).lerp(new T.Color('#ffffff'),.22)}dirty=true}
+      const changed=controls.update(),renderNeeded=dirty||changed;if(dirty){update();dirty=false}if(!document.hidden&&renderNeeded)renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
   }catch(e){console.error('G-code 3D',e);if(box.isConnected)box.innerHTML='<p class="mut">'+a('err')+'</p>'}
 }
 function openOrder(id){
   const o=ORD[id];if(!o)return;
   const showPrint=canViewPrint(o,me.is_admin);
   const started=o.print_started_at?new Date(o.print_started_at).getTime():null;
-  modal.innerHTML=`<div class="sheet glass"><button class="x" data-a="close">${ic("x")}</button>
+  modal.innerHTML=`<div class="sheet glass order-sheet ${showPrint?'has-process':''}"><button class="x" data-a="close" aria-label="${a("cancel")}">${ic("x")}</button>
   ${showPrint?`<div class="gv" id="gv"></div>`:`<div class="media">${o.image?`<img src="${esc(o.image)}">`:ic("cube")}</div>`}
   <div><h2>${esc(o.title)}</h2><p>${badge(o.status)}</p>${orderRoute(o.status)}
   <p class="mut">${esc([o.plastic,o.color].filter(Boolean).join(" · "))} · ${new Date(o.created_at).toLocaleDateString()}${o.qty>1?" · ×"+o.qty:""}${o.price!=null?" · "+o.price*(o.qty||1)+" грн":""}</p>
   ${o.descr?`<p class="mut">${esc(o.descr)}</p>`:""}${showPrint&&o.image?`<img src="${esc(o.image)}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-top:8px">`:""}
   ${o.file?`<p><a class="link" href="${esc(o.file)}" target="_blank">📎 файл</a></p>`:""}</div></div>`;
   showModal();
-  if(showPrint)gview(document.getElementById("gv"),o.gcode,{status:o.status,started});
+  if(showPrint)gview(document.getElementById("gv"),o.gcode,{status:o.status,started,color:o.color?colHex(o.color):null});
 }
 let T3=null;const G3={};
 const load3=()=>T3||(T3=(async()=>{const B="https://cdn.jsdelivr.net/npm/three@0.160.0/";const T=await import(B+"+esm");const {OrbitControls}=await import(B+"examples/jsm/controls/OrbitControls.js/+esm");return {T,OrbitControls,B}})());
@@ -679,44 +696,43 @@ function paintModel(obj,color){
     materials.forEach(material=>{if(material.color)material.color.set(color);material.vertexColors=false;material.map=null;material.needsUpdate=true})});
 }
 async function show3d(box,url,fb,color){
-  const request=Symbol('model');box.modelRequest=request;box.dataset.modelColor=color||'#ff8a1f';delete box.setModelColor;
-  const loadingLabel=Print3DMotion.loading(box,a("load3d"));
+  const request=Symbol('model');box.modelRequest=request;box.dataset.modelSelected=String(!!color);box.dataset.modelColor=Print3DViewer.selectedColor(color,window.Print3DTheme.isDark());delete box.setModelColor;delete box.setModelView;
+  const loadingLabel=Print3DMotion.loading(box,a('load3d'));
   try{
-    const {T,OrbitControls,B}=await load3();
-    let obj=G3[url];
+    const {T,OrbitControls,B}=await load3();let obj=G3[url];
     if(!obj){
-      const pg=e=>{if(box.modelRequest!==request||!loadingLabel.isConnected)return;const el=loadingLabel;if(e.total)el.textContent=a("load3d")+" "+Math.round(e.loaded/e.total*100)+"%"};
-      if(url.split("?")[0].toLowerCase().endsWith(".3mf")){const {ThreeMFLoader}=await import(B+"examples/jsm/loaders/3MFLoader.js/+esm");obj=await new ThreeMFLoader().loadAsync(url,pg)}
-      else{const {STLLoader}=await import(B+"examples/jsm/loaders/STLLoader.js/+esm");const g=await new STLLoader().loadAsync(url,pg);
-        obj=new T.Mesh(g,new T.MeshLambertMaterial({color:0xff8a1f}))}
-      obj.rotation.x=-Math.PI/2;const bb=new T.Box3().setFromObject(obj),c=bb.getCenter(new T.Vector3());
-      const grp=new T.Group();obj.position.sub(c);grp.add(obj);grp.userData.size=bb.getSize(new T.Vector3()).length();obj=G3[url]=grp;
+      const pg=e=>{if(box.modelRequest!==request||!loadingLabel.isConnected)return;if(e.total)loadingLabel.textContent=a('load3d')+' '+Math.round(e.loaded/e.total*100)+'%'};
+      if(url.split('?')[0].toLowerCase().endsWith('.3mf')){const {ThreeMFLoader}=await import(B+'examples/jsm/loaders/3MFLoader.js/+esm');obj=await new ThreeMFLoader().loadAsync(url,pg)}
+      else{const {STLLoader}=await import(B+'examples/jsm/loaders/STLLoader.js/+esm');obj=new T.Mesh(await new STLLoader().loadAsync(url,pg),new T.MeshStandardMaterial({color:0xc8cbd0}))}
+      obj.rotation.x=-Math.PI/2;const bb=new T.Box3().setFromObject(obj),center=bb.getCenter(new T.Vector3()),group=new T.Group();obj.position.sub(center);group.add(obj);group.userData.size=bb.getSize(new T.Vector3()).length();obj=G3[url]=group;
     }
     if(!box.isConnected||box.modelRequest!==request)return;
-    // Keep cached geometry, but give each viewer its own materials and color.
-    obj=obj.clone(true);const ownedMaterials=[];
-    obj.traverse(node=>{if(!node.isMesh)return;const clone=material=>{const copy=material.clone();ownedMaterials.push(copy);return copy};node.material=Array.isArray(node.material)?node.material.map(clone):clone(node.material)});
-    paintModel(obj,box.dataset.modelColor);
-    let need=true,colorTransition=null;
-    box.setModelColor=color=>{box.dataset.modelColor=color;
-      if(Print3DMotion.reduced()){paintModel(obj,color);colorTransition=null}
-      else colorTransition={start:performance.now(),target:new T.Color(color),from:ownedMaterials.map(material=>material.color?.clone())};need=true};
-    const sz=obj.userData.size||100,sc=new T.Scene();sc.add(obj);
-    sc.add(new T.HemisphereLight(0xffffff,0x332211,1.6));const dl=new T.DirectionalLight(0xffffff,1.4);dl.position.set(2,3,4);sc.add(dl);
-    const dpr=Math.min(devicePixelRatio||1,1.5);
-    const r=new T.WebGLRenderer({antialias:dpr<1.5,alpha:true,powerPreference:"high-performance"});r.setPixelRatio(dpr);
-    const w=box.clientWidth,h=box.clientHeight;r.setSize(w,h);box.innerHTML="";box.appendChild(r.domElement);Print3DMotion.model(r.domElement);
-    const cam=new T.PerspectiveCamera(48,w/h,Math.max(.01,sz/1000),sz*20);cam.position.set(sz*.62,sz*.5,sz*.78);
-    const ct=new OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.075;ct.enablePan=false;ct.enableZoom=true;ct.minDistance=sz*.18;ct.maxDistance=sz*4;ct.autoRotate=true;ct.autoRotateSpeed=1.5;
-    ct.addEventListener("change",()=>need=true);ct.addEventListener("start",()=>{ct.autoRotate=false});
-    setTimeout(()=>{ct.autoRotate=false},8000);
+    obj=obj.clone(true);const materials=[];
+    obj.traverse(node=>{if(!node.isMesh)return;const convert=()=>{const material=new T.MeshStandardMaterial({color:box.dataset.modelColor,roughness:.8,metalness:.02});materials.push(material);return material};node.material=Array.isArray(node.material)?node.material.map(convert):convert();node.castShadow=true;node.receiveShadow=true});
+    const size=new T.Box3().setFromObject(obj).getSize(new T.Vector3()),span=Math.max(size.length(),1),scene=new T.Scene();scene.add(obj);
+    let need=true,colorTransition=null,lastDark=window.Print3DTheme.isDark();
+    const hemisphere=new T.HemisphereLight(0xffffff,0x939da5,2.1);scene.add(hemisphere);
+    const key=new T.DirectionalLight(0xffffff,3);key.position.set(span,span*1.8,span*1.1);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-span,right:span,top:span,bottom:-span,near:.1,far:span*8});key.shadow.camera.updateProjectionMatrix();key.shadow.bias=-.0003;key.shadow.normalBias=span*.001;scene.add(key);
+    const fill=new T.DirectionalLight(0xffffff,1);fill.position.set(-span,span*.5,-span);scene.add(fill);
+    const floorGeo=new T.PlaneGeometry(span*3,span*3),floorMat=new T.ShadowMaterial({opacity:.14}),floor=new T.Mesh(floorGeo,floorMat);floor.rotation.x=-Math.PI/2;floor.position.y=-size.y/2-span*.002;floor.receiveShadow=true;scene.add(floor);
+    const renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+    box.innerHTML='';box.appendChild(renderer.domElement);renderer.domElement.style.touchAction='none';Print3DMotion.model(renderer.domElement);
+    const camera=new T.PerspectiveCamera(40,1,Math.max(.01,span/10000),span*30),controls=new OrbitControls(camera,renderer.domElement),direction=new T.Vector3(1,.65,1.3).normalize();controls.enableDamping=true;controls.dampingFactor=.08;controls.enablePan=false;controls.minDistance=span*.25;controls.maxDistance=span*5;
+    function fit(){const aspect=Math.max(.1,box.clientWidth/Math.max(1,box.clientHeight)),vf=camera.fov*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*aspect),distance=span*.5/Math.sin(Math.min(vf,hf)/2)*1.12;controls.target.set(0,0,0);camera.position.copy(direction).multiplyScalar(distance);controls.update();need=true}
+    box.setModelView=mode=>{direction.set(...(mode==='top'?[0,1,.001]:mode==='side'?[1,.12,.001]:[1,.65,1.3])).normalize();fit()};
+    box.setModelColor=next=>{box.dataset.modelSelected='true';box.dataset.modelColor=next;if(Print3DMotion.reduced()){paintModel(obj,next);colorTransition=null}else colorTransition={start:performance.now(),target:new T.Color(next),from:materials.map(m=>m.color.clone())};need=true};
+    const tools=box.closest('.mw')?.querySelector('.model-tools'),note=box.closest('.mw')?.querySelector('.model-dimensions');if(tools)tools.hidden=false;if(note)note.textContent=Print3DViewer.dimensions(size,lang,url.split('?')[0].toLowerCase().endsWith('.3mf')?'model':'mm')+' · '+(lang==='ru'?'Потяните для вращения':'Потягніть для обертання');
+    function resize(){const w=Math.max(1,box.clientWidth),h=Math.max(1,box.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();fit()}
+    resize();const observer=new ResizeObserver(resize);observer.observe(box);controls.addEventListener('change',()=>need=true);
+    function applyTheme(){const pal=Print3DViewer.palette(lastDark);scene.background=new T.Color(pal.background);if(box.dataset.modelSelected!=='true'){box.dataset.modelColor=pal.model;paintModel(obj,pal.model)}need=true}applyTheme();
+    function dispose(){observer.disconnect();controls.dispose();materials.forEach(m=>m.dispose());floorGeo.dispose();floorMat.dispose();if(box.modelRequest===request){delete box.setModelColor;delete box.setModelView}renderer.dispose()}
     (function loop(){
-      if(!r.domElement.isConnected){sc.remove(obj);ct.dispose();ownedMaterials.forEach(material=>material.dispose());if(box.modelRequest===request)delete box.setModelColor;r.dispose();return}
-      if(colorTransition){const progress=Math.min(1,(performance.now()-colorTransition.start)/480),ease=progress*progress*(3-2*progress);ownedMaterials.forEach((material,i)=>{if(material.color&&colorTransition.from[i])material.color.copy(colorTransition.from[i]).lerp(colorTransition.target,ease)});need=true;if(progress===1)colorTransition=null}
-      const ch=ct.update();if(ch||need){r.render(sc,cam);need=false}
-      requestAnimationFrame(loop);
+      if(!renderer.domElement.isConnected||box.modelRequest!==request){dispose();return}
+      const dark=window.Print3DTheme.isDark();if(dark!==lastDark){lastDark=dark;applyTheme()}
+      if(colorTransition){const p=Math.min(1,(performance.now()-colorTransition.start)/360),ease=p*p*(3-2*p);materials.forEach((m,i)=>m.color.copy(colorTransition.from[i]).lerp(colorTransition.target,ease));need=true;if(p===1)colorTransition=null}
+      const changed=controls.update();if(!document.hidden&&(changed||need)){renderer.render(scene,camera);need=false}requestAnimationFrame(loop);
     })();
-  }catch(e){console.error("3D",e);if(!box.isConnected||box.modelRequest!==request)return;box.innerHTML=fb||"";box.insertAdjacentHTML("beforeend",`<span class="e3">${a("err3d")}</span>`)}
+  }catch(e){console.error('3D',e);if(!box.isConnected||box.modelRequest!==request)return;box.innerHTML=fb||'';box.insertAdjacentHTML('beforeend',`<span class="e3">${a('err3d')}</span>`)}
 }
 function addToCart(p,pl,co){
   const f=cart.find(x=>x.pid==p.id&&x.plastic==pl&&x.color==co);
@@ -735,14 +751,18 @@ const refresh=async()=>{await load();await render()};
 const go=async t=>{if(!user&&["prof","chat"].includes(t))return requestAuth(t);if(t==="generators"&&!me.is_admin)return;closeModal();if(t==="chat")chatUid=null;tab=t;await render();scrollTo(0,0)};
 
 async function onClick(e){
+  const chatPhoto=e.target.closest('#msgs img');
+  if(chatPhoto){e.preventDefault();modal.innerHTML=`<div class="sheet glass image-sheet"><button class="x" data-a="close" aria-label="${a('cancel')}">${ic('x')}</button><img src="${esc(chatPhoto.currentSrc||chatPhoto.src)}" alt="${lang==='ru'?'Вложенное фото':'Прикріплене фото'}"></div>`;showModal();return}
   const b=e.target.closest("[data-a]");if(!b||b.tagName==="SELECT"||b.type==="file")return;
   const k=b.dataset.a,id=b.dataset.id,n=b.dataset.n;
   if(!user&&["send","checkout"].includes(k))return requestAuth(k==="send"?"order":"cart");
   if(!user&&["msg","phone","delo","addp","delp","addcat","delcat","addc","stock","delc","addpl","delpl","editp","asub"].includes(k))return;
   if(k==="theme"){window.Print3DTheme.toggle();head();return}
   if(k==="browse"){await go('home');document.getElementById('catalog')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return}
-  if(k==="privacy")return $('dlg').showModal();
-  if(k==="idea"){const example=premiumExamples[+n];if(!example)return;oopen=null;await go('order');document.getElementById('o-t').value=example.title[lang==='ru'?1:0];return}
+  if(k==="privacy"){e.preventDefault();return $('dlg').showModal()}
+  if(k==='chatorder'){const uid=chatUid;const {data}=await sb.from('orders').select('*').eq('user_id',uid).eq('id',id).single();if(data){ORD[data.id]=data;openOrder(data.id)}return}
+  if(k==='model-fit'||k==='model-top'||k==='model-side')return document.getElementById('media')?.setModelView?.(k.replace('model-',''));
+  if(k==='model-full')return Print3DViewer.fullscreen(document.querySelector('.product-viewer'));
   if(k==="tab")return go(n);
   if(k==="lang")return setLang(b.dataset.l);
   if(k==="sub"){sub=n;return render()}
@@ -760,7 +780,7 @@ async function onClick(e){
   if(k==="m3d"||k==="mph"){
     const p=D.products.find(x=>x.id==id),box=document.getElementById("media");if(!p||!box)return;
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));
-    if(k==="m3d")show3d(box,p.model,photoHTML(p),msel.color?colHex(msel.color):'#ff8a1f');else{box.modelRequest=null;delete box.setModelColor;box.innerHTML=photoHTML(p)}return;
+    if(k==="m3d")show3d(box,p.model,photoHTML(p),msel.color?colHex(msel.color):null);else{box.modelRequest=null;delete box.setModelColor;delete box.setModelView;box.innerHTML=photoHTML(p);const tools=box.closest('.mw')?.querySelector('.model-tools');if(tools)tools.hidden=true;const note=box.closest('.mw')?.querySelector('.model-dimensions');if(note)note.textContent=''}return;
   }
   if(k==="close")return closeModal();
   if(k==="fav")return toggleFav(+id,b);
@@ -773,7 +793,7 @@ async function onClick(e){
   if(k==="mpl"||k==="mco"||k==="pl"||k==="co"){
     b.parentNode.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));b.classList.add("on");
     const m=k[0]==="m",o=m?msel:osel;
-    if(k.endsWith("pl")){o.plastic=n;const p=D.plastics.find(x=>x.name===n);const d=document.getElementById(m?"mpd":"pdesc");if(d)d.textContent=p?p.descr||"":""}else{o.color=n;if(m){const box=document.getElementById('media');if(box){box.dataset.modelColor=colHex(n);if(box.setModelColor)box.setModelColor(colHex(n))}}}
+    if(k.endsWith("pl")){o.plastic=n;const p=D.plastics.find(x=>x.name===n);const d=document.getElementById(m?"mpd":"pdesc");if(d)d.textContent=p?p.descr||"":""}else{o.color=n;if(m){const box=document.getElementById('media');if(box){box.dataset.modelColor=colHex(n);if(box.setModelColor)box.setModelColor(colHex(n));const note=document.getElementById("model-color-note");if(note)note.textContent=n+" · "+(lang==="ru"?"Оттенок на экране приблизительный.":"Відтінок на екрані приблизний.")}}}
     return;
   }
   if(k==="addcart"){
@@ -853,6 +873,7 @@ window.openApp=async()=>{
   if(!root){
     root=document.createElement("div");root.id="app";root.innerHTML='<header class="hdr glass" id="hdr"></header><main id="view"></main>';
     document.querySelectorAll(".wrap")[1].appendChild(root);hdr=root.querySelector("#hdr");view=root.querySelector("#view");
+    const headerSize=new ResizeObserver(()=>document.documentElement.style.setProperty("--app-header-height",hdr.offsetHeight+"px"));headerSize.observe(hdr);
     initBackground();
     help=document.createElement("div");help.id="help";help.className="glass";help.dataset.a="tab";help.dataset.n="chat";
     help.innerHTML=`<span class="hi">${ic("chat")}</span><span><b></b><small></small></span>`;document.body.appendChild(help);

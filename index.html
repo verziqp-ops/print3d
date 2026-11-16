@@ -182,11 +182,12 @@ dialog h2{margin-top:0}dialog p{font-size:14px;line-height:1.5}
 </dialog>
 
 <dialog id="dlg">
-  <h2 data-t="policy"></h2>
-  <div id="polText"></div>
+  <h2 data-t="policyTitle"></h2>
+  <div id="polText"></div><p><a class="link" href="privacy.html" target="_blank" rel="noopener" id="policy-page-link" data-t="policyPage">Відкрити окрему сторінку</a></p>
   <button class="btn" id="closeDlg" data-t="close"></button>
 </dialog>
 
+<script src="privacy-content.js?v=20261116-refined1"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===== ВСТАВ СВОЇ ДАНІ З SUPABASE (Project Settings -> API) =====
@@ -202,7 +203,7 @@ const T = {
     eName:"Введіть ім'я та прізвище",eMail:"Введіть правильну пошту",ePass:"Пароль має містити мінімум 8 символів",
     eUsed:"Ця пошта вже зареєстрована",eGen:"Не вийшло зареєструватися, спробуйте ще раз",
     demo:"Режим показу: Supabase ще не підключено, лист не надсилається.",wait:"Зачекайте...",
-    pol:"<p>Ми збираємо: ім'я, прізвище, пошту, а також фото, креслення та повідомлення у чаті замовлення.</p><p>Навіщо: щоб виконати ваше замовлення та зв'язатися з вами.</p><p>Хто бачить: лише власник магазину.</p><p>Ви можете попросити видалити свої дані та акаунт у будь-який час.</p><p><i>Це заготовка, її треба замінити своїм текстом.</i></p>"},
+    pol:Print3DPrivacy.content("uk")},
   ru:{title:"Создать аккаунт",sub:"Заказывайте 3D печать и следите за статусом",first:"Имя",last:"Фамилия",
     email:"Электронная почта",pass:"Пароль (мин. 8 символов)",agree:"Я согласен на обработку персональных данных согласно",
     policy:"Политике конфиденциальности",submit:"Зарегистрироваться",doneTitle:"Проверьте почту",
@@ -210,13 +211,13 @@ const T = {
     eName:"Введите имя и фамилию",eMail:"Введите правильную почту",ePass:"Пароль должен содержать минимум 8 символов",
     eUsed:"Эта почта уже зарегистрирована",eGen:"Не удалось зарегистрироваться, попробуйте ещё раз",
     demo:"Режим показа: Supabase ещё не подключён, письмо не отправляется.",wait:"Подождите...",
-    pol:"<p>Мы собираем: имя, фамилию, почту, а также фото, чертежи и сообщения в чате заказа.</p><p>Зачем: чтобы выполнить ваш заказ и связаться с вами.</p><p>Кто видит: только владелец магазина.</p><p>Вы можете попросить удалить свои данные и аккаунт в любое время.</p><p><i>Это заготовка, её нужно заменить своим текстом.</i></p>"}
+    pol:Print3DPrivacy.content("ru")}
 };
-Object.assign(T.uk,{login:"Вхід",logout:"Вийти",loginTitle:"Вхід в акаунт",pass2:"Пароль",forgot:"Забули пароль?",
+Object.assign(T.uk,{policyTitle:Print3DPrivacy.title("uk"),policyPage:"Відкрити окрему сторінку",login:"Вхід",logout:"Вийти",loginTitle:"Вхід в акаунт",pass2:"Пароль",forgot:"Забули пароль?",
   noAcc:"Немає акаунта?",hello:"Ви увійшли",helloText:"Скоро тут з'являться ваші замовлення",
   eLogin:"Невірна пошта або пароль",eConfirm:"Спочатку підтвердьте пошту за листом",eNeedMail:"Спочатку введіть пошту",
   resetSent:"Лист для відновлення пароля надіслано",newPassTitle:"Новий пароль",newPassBtn:"Зберегти пароль",google:"Продовжити через Google",or:"або",gAgree:"Входячи через Google, ви погоджуєтесь з"});
-Object.assign(T.ru,{login:"Вход",logout:"Выйти",loginTitle:"Вход в аккаунт",pass2:"Пароль",forgot:"Забыли пароль?",
+Object.assign(T.ru,{policyTitle:Print3DPrivacy.title("ru"),policyPage:"Открыть отдельную страницу",login:"Вход",logout:"Выйти",loginTitle:"Вход в аккаунт",pass2:"Пароль",forgot:"Забыли пароль?",
   noAcc:"Нет аккаунта?",hello:"Вы вошли",helloText:"Скоро здесь появятся ваши заказы",
   eLogin:"Неверная почта или пароль",eConfirm:"Сначала подтвердите почту по письму",eNeedMail:"Сначала введите почту",
   resetSent:"Письмо для восстановления пароля отправлено",newPassTitle:"Новый пароль",newPassBtn:"Сохранить пароль",google:"Продолжить через Google",or:"или",gAgree:"Входя через Google, вы соглашаетесь с"});
@@ -349,14 +350,16 @@ setLang(lang);
 <script src="generators.js?v=20261004-editor34"></script>
 <script src="drag-handles.js?v=20261004-editor34"></script>
 <script src="chat-tools.js?v=20261004-editor34"></script>
-<script src="studio.js?v=20261004-vase36"></script>
+<script src="studio.js?v=20261116-refined1"></script>
 <script src="lava-background.js?v=20261004-lava29"></script>
 <script src="motion.js?v=20261004-product38"></script>
 <script src="generator-sliders.js?v=20261004-sliders35"></script>
 <script src="hf-generation.js?v=20261004-hf43"></script>
-<script src="flexi-editor.js?v=20261004-flexi43"></script>
+<script src="flexi-editor.js?v=20261116-refined1"></script>
 <script src="premium-theme.js?v=20261115-premium1"></script>
-<script src="app.js?v=20261115-premium3"></script>
-<link rel="stylesheet" href="premium.css?v=20261115-premium3">
+<script src="viewer-presentation.js?v=20261116-refined1"></script>
+<script src="app.js?v=20261116-refined1"></script>
+<link rel="stylesheet" href="premium.css?v=20261116-refined1">
+<link rel="stylesheet" href="refined.css?v=20261116-refined1">
 </body>
 </html>
